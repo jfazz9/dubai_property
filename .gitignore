@@ -29,6 +29,9 @@ data/owner_property_leads.csv
 data/*.pdf
 data/ar2_floorplan_reference_candidates_*.csv
 
+# Claude Code internal directory
+.claude/
+
 # Temporary/debug files
 *.tmp
 *.bak
