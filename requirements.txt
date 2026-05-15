@@ -1,0 +1,8 @@
+selenium
+pandas
+webdriver-manager
+beautifulsoup4
+requests
+pytest
+openai
+pypdf

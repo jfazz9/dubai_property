@@ -1,0 +1,34 @@
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.env
+.env.*
+
+# Local/system files
+.DS_Store
+Thumbs.db
+
+# Generated scrape/process artifacts. Keep current master CSVs, but avoid bulky snapshots.
+output/**/raw/
+output/**/processed/
+output/**/predicted/
+output/**/logs/
+output/**/enquiries/
+output/runs/
+output/**/listing_details_master_*.csv
+output/**/price_history.csv
+
+# Sensitive owner data and bulky source reports.
+data/owner_property_leads.csv
+data/*.pdf
+data/ar2_floorplan_reference_candidates_*.csv
+
+# Temporary/debug files
+*.tmp
+*.bak
