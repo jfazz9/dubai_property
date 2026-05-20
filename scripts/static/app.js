@@ -58,6 +58,16 @@
     let lastReportContext = null;
     let lastRenderedData = null;
 
+    const wfSteps = [1, 2, 3, 4].map(n => document.querySelector(`#wf-${n}`));
+    function setWorkflowStep(doneUpTo) {
+      wfSteps.forEach((el, i) => {
+        if (!el) return;
+        el.classList.remove("done", "active");
+        if (i < doneUpTo) el.classList.add("done");
+        else if (i === doneUpTo) el.classList.add("active");
+      });
+    }
+
     // Sync quick-filter purpose with main purpose
     if (purpose.value === "sale" || purpose.value === "rent") quickPurpose.value = purpose.value;
     purpose.addEventListener("change", () => {
@@ -263,6 +273,10 @@
       fallbackResults.innerHTML = renderListings(fallback, data.enquiry.purpose);
       if (data.rank_context) lastRankContext = data.rank_context;
       if (data.report_context) lastReportContext = data.report_context;
+      // Advance the workflow indicator based on how far we've got
+      if (data.report_context) setWorkflowStep(3);       // steps 1-3 done, client report next
+      else if (data.rank_context) setWorkflowStep(2);    // steps 1-2 done, build report next
+      else setWorkflowStep(1);                           // step 1 done, scenario next
     }
 
     function clearPage() {
@@ -291,6 +305,7 @@
       lastRankContext = null;
       lastReportContext = null;
       lastRenderedData = null;
+      setWorkflowStep(0);
       promptBox.focus();
     }
 
@@ -906,6 +921,7 @@
         renderAiClientReport(data.client_report || {});
         aiPanel.hidden = false;
         aiPanel.textContent = "Client report opened in a new tab.";
+        setWorkflowStep(4);
       } catch (err) {
         error.hidden = false;
         error.textContent = err.name === "AbortError" ? "Client report timed out. Try fewer ranked results." : err.message;

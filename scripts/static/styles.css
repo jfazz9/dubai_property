@@ -253,6 +253,45 @@
     }
     .comm-grid label:hover { color: var(--ink); }
 
+    /* ── Workflow bar ── */
+    .workflow-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+    }
+    .wf-step {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #fff;
+      white-space: nowrap;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .wf-step.done {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .wf-step.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #f0faf6;
+    }
+    .wf-arrow {
+      font-size: 11px;
+      color: var(--line);
+      flex-shrink: 0;
+    }
+
     /* AI chips row */
     .ai-row {
       display: flex;

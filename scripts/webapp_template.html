@@ -68,6 +68,18 @@
       <button id="quick-query" style="min-height:32px;align-self:flex-end;border-radius:6px;border:none;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:700;padding:0 14px;cursor:pointer">Filter</button>
     </div>
 
+    <!-- Workflow bar -->
+    <div class="workflow-bar">
+      <span class="wf-step" id="wf-1">① Find</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-step" id="wf-2">② Scenario</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-step" id="wf-3">③ Build Report</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-step" id="wf-4">④ Client Report</span>
+      <button class="chip estimate" id="ai-estimate" type="button" style="margin-left:auto">Estimate value</button>
+    </div>
+
     <!-- Main search card -->
     <div class="search-card">
       <textarea id="prompt" name="prompt" placeholder="e.g. 3 bed villa in AR2, budget 5.5m">__PROMPT__</textarea>
@@ -116,7 +128,6 @@
       <div class="ai-row">
         <span class="ai-label">AI</span>
         <button class="chip general" id="ai-feedback" type="button">General</button>
-        <button class="chip estimate" id="ai-estimate" type="button">Estimate value</button>
         <span class="ai-divider"></span>
         <span class="ai-label">Scenarios</span>
         <button class="chip scenario-button" type="button" data-scenario="best_value">Best value</button>
