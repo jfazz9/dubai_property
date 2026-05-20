@@ -60,12 +60,18 @@
 
     const wfSteps = [1, 2, 3, 4].map(n => document.querySelector(`#wf-${n}`));
     function setWorkflowStep(doneUpTo) {
+      // Update step indicator pills
       wfSteps.forEach((el, i) => {
         if (!el) return;
         el.classList.remove("done", "active");
         if (i < doneUpTo) el.classList.add("done");
         else if (i === doneUpTo) el.classList.add("active");
       });
+      // Light up the relevant buttons to show what's ready to use
+      promptBox.classList.toggle("prompt-ready", doneUpTo === 0);
+      scenarioButtons.forEach(btn => btn.classList.toggle("step-ready", doneUpTo === 1));
+      aiReportButton.classList.toggle("step-ready", doneUpTo === 2);
+      clientReportButton.classList.toggle("step-ready", doneUpTo === 3);
     }
 
     // Sync quick-filter purpose with main purpose
@@ -1097,4 +1103,6 @@
     clientReportButton.addEventListener("click", () => { ensureApiKeyVisible(); runClientReport(); });
     scenarioButtons.forEach((btn) => btn.addEventListener("click", () => { ensureApiKeyVisible(); runScenario(btn.dataset.scenario, btn); }));
     promptBox.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") runSearch(); });
-  
+
+    // Set initial state on page load
+    setWorkflowStep(0);

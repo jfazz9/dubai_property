@@ -291,6 +291,22 @@
       color: var(--line);
       flex-shrink: 0;
     }
+    /* Prompt box glows green when it's the starting point */
+    textarea.prompt-ready {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px #d4f0e8;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    /* Buttons light up when they become the active step */
+    .chip.step-ready {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #f0faf6;
+    }
+    .report-chip.step-ready {
+      box-shadow: 0 0 0 2px var(--accent);
+      opacity: 1;
+    }
 
     /* AI chips row */
     .ai-row {
