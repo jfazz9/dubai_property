@@ -232,6 +232,24 @@ class AppHandler(BaseHTTPRequestHandler):
         parsed_url = urlparse(self.path)
         path = parsed_url.path
 
+        if path.startswith("/static/"):
+            # serve from scripts/static/
+            static_dir = Path(__file__).parent / "static"
+            file_path = static_dir / path[len("/static/"):]
+            if not file_path.is_file() or not str(file_path).startswith(str(static_dir)):
+                self.send_error(404)
+                return
+            suffix = file_path.suffix.lower()
+            content_types = {".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8"}
+            ct = content_types.get(suffix, "application/octet-stream")
+            body = file_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", ct)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+
         if path not in {"/", "/index.html", "/search"}:
             self.send_error(404)
             return
