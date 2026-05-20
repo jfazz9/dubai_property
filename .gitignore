@@ -14,15 +14,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Generated scrape/process artifacts. Keep current master CSVs, but avoid bulky snapshots.
-output/**/raw/
-output/**/processed/
-output/**/predicted/
-output/**/logs/
-output/**/enquiries/
-output/runs/
-output/**/listing_details_master_*.csv
-output/**/price_history.csv
+# Generated scrape/process artifacts — all output data ignored (changes on every scrape run).
+output/
+
 
 # Sensitive owner data and bulky source reports.
 data/owner_property_leads.csv
