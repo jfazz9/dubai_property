@@ -1,51 +1,111 @@
-# Dubai Property Detector
+# Dubai Property Intelligence Platform
 
-Tools for collecting Property Finder listing data, cleaning it into database-ready CSV files, and predicting Arabian Ranches 2 villa types using local floorplan reference data.
+A local AI-powered property research tool built for Dubai real estate agents. Scrapes, structures, and analyses Arabian Ranches 2 listings — then matches client briefs, predicts villa types, estimates valuations, and generates professional client reports, all from a browser-based interface running on your own machine.
+
+Built and deployed for active agents who use it daily to save time and work more productively with clients.
+
+---
+
+## What It Does
+
+- **Natural language search** — type a client brief (`3 bed villa in Casa, budget 5.5m`) and get a ranked shortlist from your live database
+- **Villa type prediction** — scores every listing against authoritative BUA and plot ranges to predict Type 1 / Type 2 / Type 3 etc with confidence ratings
+- **AI scenario analysis** — ranks shortlists using OpenAI across scenarios: Best Value, Budget Reality, Negotiation Case, Upgrade Potential, Move-in Ready
+- **Market-backed valuation** — estimates low / mid / high value ranges using comparable active listings and DLD transaction data, filtered by community and type
+- **Professional client reports** — generates a 5-section PDF-style report with transaction data, current inventory, comparison table, and strategic advisory
+- **Owner lead matching** — paste a Property Finder URL and instantly cross-reference against your owner database
+- **Price history tracking** — detects and logs price changes across scrape runs
+
+---
+
+## Tech Stack
+
+Python · OpenAI API · Selenium · Pandas · Vanilla JS · Local HTTP server
+
+---
+
+## Web App
+
+Run a private local web app that reads your collected listing data:
+
+```bash
+python scripts/webapp.py
+```
+
+Then open `http://127.0.0.1:8000/` in your browser.
+
+**Workflow:**
+1. Type a client-style prompt and press **Find** — filters and ranks from your database
+2. Pick a **Scenario** (Budget Reality, Best Value, Negotiation etc) — AI ranks the shortlist
+3. Press **Build Report** — AI writes a deep market-backed analysis
+4. Press **Client Report** — opens a professional PDF-ready report in a new tab
+
+**Standalone tools:**
+- **Estimate Value** — AI valuation range from a property description, no search needed
+- **Owner Lookup** — cross-reference a listing URL against your owner leads database
+
+---
+
+## Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Collect listing URLs (opens Chrome — complete bot check manually)
+python scripts/collect_property_urls.py --purpose sale --location "Arabian Ranches 2"
+
+# Scrape listing pages
+python scripts/scrape_listing_pages.py --purpose sale
+
+# Process and clean data
+python scripts/process_listing_data.py --purpose sale
+
+# Predict villa types
+python scripts/predict_villa_type.py --purpose sale
+
+# Launch the web app
+python scripts/webapp.py
+```
+
+Works for both `--purpose sale` and `--purpose rent`.
+
+---
 
 ## Project Structure
 
 ```text
-data/
-  ar2_villa_type_reference.csv        AR2 community+type reference with BUA/plot min–max ranges
-  ar2_type_enrichment.csv             Manual knowledge notes by community/type
-  dxb_market_sales.csv                DLD/market transaction data (community, size_sqft, beds, price)
-  dxb_market_sales_predicted.csv      Market data enriched with predicted villa types (auto-generated)
-
-output/
-  sale/
-    property_urls.json                Sale listing URLs
-    raw/                              Sale raw page scrape CSVs
-    processed/                        Sale clean processed CSVs
-    predicted/                        Sale predicted CSVs
-    listing_details_master.csv        Sale final master file
-    price_history.csv                 Sale price-change history
-  rent/
-    property_urls.json                Rental listing URLs
-    raw/                              Rental raw page scrape CSVs
-    processed/                        Rental clean processed CSVs
-    predicted/                        Rental predicted CSVs
-    listing_details_master.csv        Rental final master file
-    price_history.csv                 Rental price-change history
-
 scripts/
-  collect_property_urls.py            Collects Property Finder listing URLs
-  scrape_listing_pages.py             Scrapes raw listing pages
-  process_listing_data.py             Converts raw pages into clean listing rows
-  predict_villa_type.py               Predicts AR2 villa type from processed rows
-  check_active_listings.py            Checks active master URLs without rescraping full details
-  match_enquiry.py                    Matches an enquiry against the master database
-  predict_market_villa_type.py        Predicts villa types for market transaction data (dxb_market_sales.csv)
-  webapp.py                           Local browser app for prompt-based matching and AI tools
-  webapp_backend.py                   Backend logic for the web app (matching, AI feedback, estimator)
-  build_floorplan_reference_candidates.py
-                                      Builds review candidates from live listing evidence
-  extract_listing_details.py          Shared Selenium/parsing helpers
+  webapp.py                     Local web app (HTTP server)
+  webapp_backend/               Backend package — matching, AI, estimator, market context
+  static/                       CSS and JS for the web app
+  collect_property_urls.py      Collect listing URLs from Property Finder
+  scrape_listing_pages.py       Scrape full listing detail pages
+  process_listing_data.py       Clean raw pages into structured CSV rows
+  predict_villa_type.py         Predict AR2 villa types from BUA/plot/description
+  predict_market_villa_type.py  Enrich DLD transaction data with villa type predictions
+  check_active_listings.py      Check listing URLs are still active without full rescrape
+
+data/
+  ar2_villa_type_reference.csv       Authoritative BUA and plot ranges per community and type
+  dxb_market_sales.csv               DLD market transaction records
+  dxb_market_sales_predicted.csv     Market data enriched with villa type predictions
+  dxb_market_rentals.csv             Rental transaction records
+  dxb_market_rentals_predicted.csv   Rental data enriched with villa type predictions
 
 tests/
-  test_processing.py                   Processing/parser tests
-  test_prediction.py                   Villa-type prediction and scoring tests
-  test_estimator.py                    Valuation estimator pipeline tests
+  test_processing.py            Processing and parser tests
+  test_prediction.py            Villa type prediction and scoring tests
+  test_estimator.py             Valuation estimator tests
+  test_enquiry_matcher.py       Enquiry matching tests
+  test_webapp.py                Web app backend and market context tests
 ```
+
+---
+
+## Full Operational Workflow
+
+> The sections below cover the complete weekly operating rhythm, all script options, and reference data management.
 
 ## Setup
 
