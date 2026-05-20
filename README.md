@@ -6,8 +6,10 @@ Tools for collecting Property Finder listing data, cleaning it into database-rea
 
 ```text
 data/
-  ar2_bayut_floorplan_reference.csv   Local AR2 floorplan reference table
+  ar2_villa_type_reference.csv        AR2 community+type reference with BUA/plot min–max ranges
   ar2_type_enrichment.csv             Manual knowledge notes by community/type
+  dxb_market_sales.csv                DLD/market transaction data (community, size_sqft, beds, price)
+  dxb_market_sales_predicted.csv      Market data enriched with predicted villa types (auto-generated)
 
 output/
   sale/
@@ -32,15 +34,17 @@ scripts/
   predict_villa_type.py               Predicts AR2 villa type from processed rows
   check_active_listings.py            Checks active master URLs without rescraping full details
   match_enquiry.py                    Matches an enquiry against the master database
-  webapp.py                           Local browser app for prompt-based matching
+  predict_market_villa_type.py        Predicts villa types for market transaction data (dxb_market_sales.csv)
+  webapp.py                           Local browser app for prompt-based matching and AI tools
+  webapp_backend.py                   Backend logic for the web app (matching, AI feedback, estimator)
   build_floorplan_reference_candidates.py
                                       Builds review candidates from live listing evidence
-  build_bayut_floorplan_reference.py  Validates/builds local Bayut floorplan reference
   extract_listing_details.py          Shared Selenium/parsing helpers
 
 tests/
   test_processing.py                   Processing/parser tests
-  test_prediction.py                   Villa-type prediction tests
+  test_prediction.py                   Villa-type prediction and scoring tests
+  test_estimator.py                    Valuation estimator pipeline tests
 ```
 
 ## Setup
@@ -95,6 +99,14 @@ python scripts\predict_villa_type.py --purpose rent
 ```
 
 This updates the master file with new listings, latest prices, predicted villa types, and price history.
+
+If you have updated `data/dxb_market_sales.csv` with new transactions, also run:
+
+```powershell
+python scripts\predict_market_villa_type.py
+```
+
+This enriches the market file with predicted villa types so the valuation estimator can filter market comps by type.
 
 #### Wednesday Evening: Midweek Listing Update
 
@@ -176,11 +188,7 @@ python scripts\build_floorplan_reference_candidates.py --purpose sale
 python scripts\build_floorplan_reference_candidates.py --purpose rent
 ```
 
-Review the candidate CSVs manually. Only promote strong repeated evidence into:
-
-```text
-data/ar2_bayut_floorplan_reference.csv
-```
+Review the candidate CSVs manually. Promote strong repeated evidence into `data/ar2_villa_type_reference.csv` by updating the `bua_min_sqft`, `bua_max_sqft`, `plot_min_sqft`, and `plot_max_sqft` columns for the relevant community+type rows.
 
 #### Monthly: Manual Clean-Up
 
@@ -210,6 +218,7 @@ Best default rhythm:
 - Rentals: scan Monday evening and Friday before the weekend; add Wednesday evening when rental stock is moving quickly.
 - Active checker: Friday before the weekend, or before a serious client matching session.
 - Reference candidates: weekly build, monthly manual update.
+- Market data: run `predict_market_villa_type.py` whenever `dxb_market_sales.csv` is updated with new transactions.
 
 ### Quick Rental Collection Cycle
 
@@ -326,7 +335,23 @@ after a 3/4 bed in ar2 at 5.5m budget
 
 The web app does not scrape live websites. It only searches the data you have already collected.
 
-The top bar has an optional OpenAI API key field for richer AI feedback. The key is sent only to the local app request and is not saved to disk. Use `Check key` first to confirm the key, billing/quota, model access, and connection work. Then use `AI feedback` after entering a prompt if you want a more agent-style market read, ranking summary, and client response.
+The top bar has an optional OpenAI API key field for richer AI features. The key is sent only to the local app request and is not saved to disk. Use `Check key` first to confirm the key, billing/quota, model access, and connection work.
+
+**AI chips (require an OpenAI key):**
+
+- `AI feedback` — general market read, ranking summary, and suggested client response for the current shortlist.
+- `Build report` — deeper market-backed report using the ranked cards and selected comps. Choose a scenario button first (Budget reality, Best value, Negotiation case, etc.) for a scenario-focused report.
+- `Estimate value` — AI-powered valuation range (low / mid / high). Describe the property in the prompt, including community, type, bedrooms, and any condition notes (extended, upgraded, corner plot, pool). Works for both sales and rentals.
+
+**Estimate value tip:** Include as much detail as possible for the most accurate estimate. Example prompts:
+
+```text
+Rosa Type 3, 4 bed, corner plot, fully upgraded, private pool
+Samara Type 2, 4 bed villa, standard condition, vacant on transfer
+Lila Type 2 rental, 4 bed, furnished, excellent finishes
+```
+
+The estimator uses the active master database to find comparable listings within the same community and type, reads the authoritative BUA and plot ranges from `data/ar2_villa_type_reference.csv`, detects extended units, and sends this context to OpenAI to generate the estimate. Rental estimates return annual figures.
 
 The web app also has an owner lookup bar. Export your Google Sheets owner database to:
 
@@ -360,13 +385,13 @@ python scripts\scrape_listing_pages.py --purpose rent --manual-wait 20
 python scripts\process_listing_data.py --purpose rent
 ```
 
-The villa-type prediction step is currently Arabian Ranches 2 specific because it uses:
+The villa-type prediction and valuation estimator steps are currently Arabian Ranches 2 specific because they use:
 
 ```text
-data/ar2_bayut_floorplan_reference.csv
+data/ar2_villa_type_reference.csv
 ```
 
-For non-AR2 areas, the scrape and cleaned listing data can still work, but `predict_villa_type.py` will only produce useful type predictions after a matching reference file and prediction rules are added for that area.
+For non-AR2 areas, the scrape and cleaned listing data can still work, but `predict_villa_type.py` will only produce useful type predictions after a matching reference file (with `bua_min_sqft`, `bua_max_sqft`, `plot_min_sqft`, `plot_max_sqft` columns) and prediction rules are added for that area.
 
 ### 1. Collect Listing URLs
 
@@ -497,7 +522,7 @@ python scripts\predict_villa_type.py --purpose rent
 By default, this uses the latest processed listing file and compares it with:
 
 ```text
-data/ar2_bayut_floorplan_reference.csv
+data/ar2_villa_type_reference.csv
 ```
 
 It outputs a predicted CSV in:
@@ -505,6 +530,13 @@ It outputs a predicted CSV in:
 ```text
 output/<purpose>/predicted/
 ```
+
+**How prediction works:**
+
+- If the listing description or title explicitly states the villa type (e.g. `Type 2`, `Type 1E`), the type is accepted as ground truth with 100% confidence. No scoring is needed.
+- Otherwise, the listing's BUA, plot size, bedrooms, and bathrooms are scored against the community+type reference ranges. Each community has its own reference rows — a Type 2 in Samara is scored against Samara reference data, never against Casa or Lila data.
+- BUA within the `bua_min_sqft`–`bua_max_sqft` range is a strong match. BUA above `bua_max_sqft` is consistent with an extended unit of the same type. BUA well below the range is a negative signal.
+- Confidence labels: `Type 2` (≥ 70), `Likely Type 2` (45–69), `Possible Type 2` (25–44), `Unknown` (< 25).
 
 The predicted file adds:
 
@@ -567,7 +599,61 @@ To run against a specific processed file:
 python scripts\predict_villa_type.py --purpose sale --input output\sale\processed\listing_details_2026-05-12_21-07_processed_v2.csv
 ```
 
-### 5. Check Active Listings
+### 5. Enrich Market Transaction Data
+
+`data/dxb_market_sales.csv` contains DLD or third-party market transaction records. Each row has `community`, `size_sqft` (BUA), and sometimes `beds`, but **no villa type**. Without a type, the valuation estimator cannot filter market transactions meaningfully.
+
+Run the enrichment script to predict villa types for every market row:
+
+```powershell
+python scripts\predict_market_villa_type.py
+```
+
+This reads:
+
+```text
+data/dxb_market_sales.csv
+data/ar2_villa_type_reference.csv
+```
+
+It writes:
+
+```text
+data/dxb_market_sales_predicted.csv
+```
+
+The predicted file adds three columns to the original:
+
+```text
+predicted_type          e.g. "Type 3", "Likely Type 2", "Possible Type 1E"
+prediction_confidence   0–100 score
+prediction_reason       short explanation of what matched
+```
+
+Prediction logic is identical to `predict_villa_type.py` — BUA range scoring against the community+type reference, with bed count as a secondary signal. Because market rows have no plot or bathroom data, confidence is generally lower than for full listing data. Confidence labels follow the same thresholds:
+
+```text
+>= 70   direct label:  "Type 3"
+45-69   Likely:         "Likely Type 3"
+25-44   Possible:       "Possible Type 3"
+< 25    Unknown:        not enough signal
+```
+
+**The web app automatically uses `dxb_market_sales_predicted.csv` when it exists.** The valuation estimator filters market transactions by predicted type when building its comparable context, so the estimator automatically gets the benefit of type-filtered market sales without any additional steps.
+
+Re-run this script whenever you update `data/dxb_market_sales.csv` with new transactions:
+
+```powershell
+python scripts\predict_market_villa_type.py
+```
+
+To use a custom input or output path:
+
+```powershell
+python scripts\predict_market_villa_type.py --input data\my_transactions.csv --output data\my_transactions_predicted.csv
+```
+
+### 6. Check Active Listings
 
 Use `check_active_listings.py` to check whether master-file URLs still look active without rescraping every listing detail page.
 
@@ -637,18 +723,27 @@ description_json
 
 Notes:
 
-- `property_size_sqft` is the size shown by Property Finder.
-- `plot_size_sqft` uses description plot size when available, otherwise falls back to Property Finder size.
+- `property_size_sqft` is the BUA (built-up area) shown by Property Finder. This is the Dubai standard for price per sqft calculations.
+- `plot_size_sqft` is only populated when a plot size is explicitly found in the listing description. It is never set from `property_size_sqft` — BUA and plot are completely different measurements.
+- `price_per_sqft` is always calculated on BUA (`property_size_sqft`), not plot. This matches the Dubai/Property Finder convention.
 - Sale rows fill `sale_price` and `sale_price_per_sqft`.
-- Rent rows fill `rent_price`, `rent_frequency`, `annual_rent`, `monthly_rent_equivalent`, and `rent_per_sqft`.
+- Rent rows fill `rent_price`, `rent_frequency`, `annual_rent`, `monthly_rent_equivalent`, and `rent_per_sqft` (annualized, calculated on BUA).
 - `price_per_sqft` is purpose-aware: sale price per sqft for sales, annualized rent per sqft for rentals.
 - `bua_from_description` is only filled when the listing text explicitly says BUA or built-up area.
+- `plot_from_description` is the raw plot size extracted from the listing text — always preferred over `plot_size_sqft` when both are available.
 - `description` is the full expanded listing description for later AI analysis.
 - `description_json` stores the same description as JSON with `text` and `lines`.
 
 ## Reference Data
 
-`data/ar2_bayut_floorplan_reference.csv` is the local floorplan reference used for prediction. It includes community, type, bedroom/bathroom counts, and reference BUA/plot where known.
+`data/ar2_villa_type_reference.csv` is the authoritative community+type reference used for villa type prediction and valuation estimating. It covers every AR2 sub-community and villa type with:
+
+- `bua_min_sqft` / `bua_max_sqft` — standard BUA range for an unextended unit of this type
+- `plot_min_sqft` / `plot_max_sqft` — expected plot range for this type
+
+**Community and type are treated as an inseparable pair.** A Type 2 in Samara (4-bed, BUA 3,128–4,361 sqft) is a completely different villa from a Type 2 in Casa (3-bed, BUA 2,892–3,394 sqft). Prediction and estimation always filter by community and type together — never by type alone across communities.
+
+BUA above `bua_max_sqft` signals an extended unit, which commands a price premium. BUA within the min–max range is a standard, unextended unit.
 
 `data/ar2_type_enrichment.csv` is for manual notes and market knowledge. Add your own findings here over time, such as extension potential, common upgrades, buyer profile, and value notes.
 
@@ -672,7 +767,7 @@ The script reads:
 
 ```text
 output/<purpose>/listing_details_master.csv
-data/ar2_bayut_floorplan_reference.csv
+data/ar2_villa_type_reference.csv
 ```
 
 It writes a timestamped candidate file in:
@@ -681,13 +776,13 @@ It writes a timestamped candidate file in:
 data/ar2_floorplan_reference_candidates_<purpose>_YYYY-MM-DD_HH-MM.csv
 ```
 
-This file is for review only. It does not overwrite `data/ar2_bayut_floorplan_reference.csv`.
+This file is for review only. It does not overwrite `data/ar2_villa_type_reference.csv`.
 
 The safest update rhythm is:
 
 - Update the master database whenever you scrape new listings.
 - Rebuild the candidate reference file weekly.
-- Manually promote good evidence into `data/ar2_bayut_floorplan_reference.csv` monthly, or whenever you are confident.
+- Manually promote good evidence into `data/ar2_villa_type_reference.csv` monthly, or whenever you are confident.
 
 Use the `evidence_count`, size medians, reference status, and example URLs to decide what should be promoted. Trust `detected_type_from_description` more than `predicted_type`, because `predicted_type` already depends on the reference file.
 

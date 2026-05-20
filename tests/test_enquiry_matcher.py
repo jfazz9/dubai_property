@@ -190,6 +190,128 @@ def test_sale_tie_breaker_prefers_closer_to_budget():
     assert matches_df.iloc[0]["url"] == "https://example.com/near-budget-villa"
 
 
+def test_rent_search_prefers_near_budget_over_floor_price():
+    master_df = pd.DataFrame([
+        {
+            "listing_purpose": "rent",
+            "is_active": True,
+            "url": "https://example.com/floor-price-villa",
+            "title": "Rent in Lila: 5 bed villa",
+            "annual_rent": 360000,
+            "bedrooms": 5,
+            "predicted_community": "Lila",
+            "description": "Villa in Arabian Ranches 2.",
+        },
+        {
+            "listing_purpose": "rent",
+            "is_active": True,
+            "url": "https://example.com/near-budget-villa",
+            "title": "Rent in Samara: 5 bed villa",
+            "annual_rent": 440000,
+            "bedrooms": 5,
+            "predicted_community": "Samara",
+            "description": "Villa in Arabian Ranches 2.",
+        },
+    ])
+    enquiry = {
+        "purpose": "rent",
+        "budget": 450000,
+        "stretch_budget": 450000,
+        "budget_floor": 360000,
+        "bedrooms": 5,
+        "community": "Arabian Ranches 2",
+        "must_haves": [],
+        "preferred_category": "villa",
+    }
+
+    matches_df = match_enquiry(master_df, enquiry, limit=2)
+
+    assert matches_df.iloc[0]["url"] == "https://example.com/near-budget-villa"
+    assert "near the stated budget" in matches_df.iloc[0]["match_reasons"]
+
+
+def test_rent_search_includes_premium_stretch_options_before_low_budget_stock():
+    master_df = pd.DataFrame([
+        {
+            "listing_purpose": "rent",
+            "is_active": True,
+            "url": "https://example.com/low-budget-villa",
+            "title": "Rent in Lila: 5 bed villa",
+            "annual_rent": 380000,
+            "bedrooms": 5,
+            "predicted_community": "Lila",
+            "description": "Villa in Arabian Ranches 2.",
+        },
+        {
+            "listing_purpose": "rent",
+            "is_active": True,
+            "url": "https://example.com/stretch-villa",
+            "title": "Rent in Yasmin: 5 bed villa",
+            "annual_rent": 485000,
+            "bedrooms": 5,
+            "predicted_community": "Yasmin",
+            "description": "Villa in Arabian Ranches 2.",
+        },
+    ])
+    enquiry = {
+        "purpose": "rent",
+        "budget": 450000,
+        "stretch_budget": 517500,
+        "budget_floor": 360000,
+        "bedrooms": 5,
+        "community": "Arabian Ranches 2",
+        "must_haves": [],
+        "preferred_category": "villa",
+    }
+
+    matches_df = match_enquiry(master_df, enquiry, limit=2)
+
+    assert matches_df.iloc[0]["url"] == "https://example.com/stretch-villa"
+    assert "premium stretch option" in matches_df.iloc[0]["match_reasons"]
+
+
+def test_move_in_ready_prefers_premium_stretch_over_generic_cheap_ready_stock():
+    master_df = pd.DataFrame([
+        {
+            "listing_purpose": "rent",
+            "is_active": True,
+            "url": "https://example.com/cheap-ready",
+            "title": "Rent in Lila: Ready To Move | Spacious | Bright",
+            "annual_rent": 380000,
+            "bedrooms": 5,
+            "predicted_community": "Lila",
+            "description": "Ready to move villa with spacious bright open-plan living and landscaped garden.",
+        },
+        {
+            "listing_purpose": "rent",
+            "is_active": True,
+            "url": "https://example.com/premium-stretch",
+            "title": "Rent in Rasha: Vacant Soon | Close to Pool | Open Plan",
+            "annual_rent": 485000,
+            "bedrooms": 5,
+            "predicted_community": "Rasha",
+            "description": "Vacant soon villa with open plan living, natural light and landscaped garden.",
+        },
+    ])
+    enquiry = {
+        "purpose": "rent",
+        "raw_prompt": "5 bed villa 450k budget",
+        "search_intent": "move_in_ready",
+        "budget": 450000,
+        "stretch_budget": 517500,
+        "budget_floor": 360000,
+        "bedrooms": 5,
+        "community": None,
+        "must_haves": [],
+        "preferred_category": "villa",
+    }
+
+    matches_df = match_enquiry(master_df, enquiry, limit=2)
+
+    assert matches_df.iloc[0]["url"] == "https://example.com/premium-stretch"
+    assert "move-in ready premium stretch" in matches_df.iloc[0]["match_reasons"]
+
+
 def test_casa_enquiry_prefers_villas_and_related_communities_over_townhouses():
     master_df = pd.DataFrame([
         {

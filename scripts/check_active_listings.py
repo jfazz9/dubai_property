@@ -1,4 +1,5 @@
 import argparse
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -44,6 +45,14 @@ SEARCH_PAGE_MARKERS = [
     "/en/rent/properties-for-rent",
 ]
 
+_LISTING_ID_RE = re.compile(r"-(\d{6,12})(?:\.html)?(?:\?|$|/)", re.IGNORECASE)
+
+
+def extract_listing_id(url):
+    """Extract the numeric listing ID from a Property Finder URL, or None."""
+    match = _LISTING_ID_RE.search(url or "")
+    return match.group(1) if match else None
+
 
 @dataclass
 class ActiveCheckResult:
@@ -85,6 +94,7 @@ def classify_response(original_url, response):
     final_url = response.url or original_url
     text = response.text or ""
     status_code = response.status_code
+    was_redirected = bool(getattr(response, "history", []))
 
     if looks_like_human_verification(text):
         return ActiveCheckResult(True, "unknown_human_verification", "human verification or bot challenge page")
@@ -101,8 +111,21 @@ def classify_response(original_url, response):
     if looks_inactive_from_text(text):
         return ActiveCheckResult(False, "inactive_not_found_text", "page text says listing is unavailable")
 
-    if looks_like_search_page(final_url) and "/plp/" not in final_url.lower():
-        return ActiveCheckResult(False, "inactive_redirected_to_search", f"redirected to {final_url}")
+    if looks_like_search_page(final_url):
+        return ActiveCheckResult(False, "inactive_redirected_to_search", f"redirected to search page: {final_url}")
+
+    # Check if the listing ID in the final URL still matches the original.
+    # Property Finder sometimes silently redirects removed listings to a
+    # similar listing — same /plp/ path but a different numeric ID.
+    original_id = extract_listing_id(original_url)
+    final_id = extract_listing_id(final_url)
+    if original_id and final_id and original_id != final_id:
+        return ActiveCheckResult(False, "inactive_redirected_to_similar", f"redirected from ID {original_id} to {final_id}")
+
+    # If there were redirects but we can't identify the IDs, flag as unknown
+    # rather than assuming active.
+    if was_redirected and "/plp/" not in final_url.lower():
+        return ActiveCheckResult(False, "inactive_redirected_unknown", f"redirected away from listing page: {final_url}")
 
     if "/plp/" in final_url.lower() and status_code == 200:
         return ActiveCheckResult(True, "active", "listing page returned successfully")
@@ -128,6 +151,8 @@ def ensure_check_columns(master_df):
     for column in CHECK_COLUMNS:
         if column not in master_df.columns:
             master_df[column] = ""
+        elif master_df[column].dtype != object:
+            master_df[column] = master_df[column].astype(object)
 
     if "is_active" not in master_df.columns:
         master_df["is_active"] = True

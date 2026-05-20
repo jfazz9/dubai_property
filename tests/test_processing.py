@@ -150,3 +150,74 @@ def test_process_raw_row_can_disable_target_area_filter():
     }
 
     assert process_raw_row(row, purpose="sale", target_area="")["price"] == 1140000
+
+
+def test_process_raw_row_plot_size_sqft_is_none_when_no_plot_in_description():
+    """plot_size_sqft must not fall back to property_size_sqft (BUA).
+
+    A previous bug caused plot_size_sqft to be populated with the BUA value
+    when no plot was found in the listing description. PPSF is always calculated
+    on BUA (property_size_sqft) — the Dubai/Property Finder standard.
+    """
+    row = {
+        "url": "https://www.propertyfinder.ae/en/plp/buy/villa-for-sale-lila-65948288.html",
+        "scraped_at": "2026-05-13 10:00:00",
+        "title": "Sale in Lila: 4BR Villa",
+        "page_status": "ok",
+        "price_dom": "6,700,000",
+        "bedrooms_dom": "4 Beds",
+        "bathrooms_dom": "4 Baths",
+        "size_dom": "3,234 sqft",
+        "full_page_text": "\n".join([
+            "Logo-En",
+            "Search",
+            "6,700,000",
+            "4",
+            "4",
+            "3,234 sqft",
+            "Description",
+            "Lovely 4-bedroom villa in Lila, Arabian Ranches 2.",
+            "No plot size mentioned in this listing.",
+        ]),
+    }
+
+    processed = process_raw_row(row, purpose="sale")
+
+    # BUA is populated from size_dom
+    assert processed["property_size_sqft"] == 3234
+    # Plot must be None — no plot found in description, no fallback to BUA
+    assert processed["plot_size_sqft"] is None
+    # PPSF uses BUA
+    assert processed["sale_price_per_sqft"] == round(6_700_000 / 3234)
+
+
+def test_process_raw_row_plot_size_sqft_populated_from_description():
+    """When the listing description contains a plot size, it should be captured."""
+    row = {
+        "url": "https://www.propertyfinder.ae/en/plp/buy/villa-for-sale-rosa-65948290.html",
+        "scraped_at": "2026-05-13 10:00:00",
+        "title": "Sale in Rosa: Type 3 Villa",
+        "page_status": "ok",
+        "price_dom": "8,500,000",
+        "bedrooms_dom": "4 Beds",
+        "bathrooms_dom": "6 Baths",
+        "size_dom": "4,814 sqft",
+        "full_page_text": "\n".join([
+            "Logo-En",
+            "Search",
+            "8,500,000",
+            "4",
+            "6",
+            "4,814 sqft",
+            "Description",
+            "Type 3 villa for sale in Rosa, Arabian Ranches 2.",
+            "BUA: 4,814 sqft | Plot: 7,776 sqft",
+        ]),
+    }
+
+    processed = process_raw_row(row, purpose="sale")
+
+    assert processed["property_size_sqft"] == 4814
+    assert processed["plot_size_sqft"] == 7776
+    # PPSF still uses BUA, not plot
+    assert processed["sale_price_per_sqft"] == round(8_500_000 / 4814)

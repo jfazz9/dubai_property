@@ -179,11 +179,13 @@ def process_raw_row(row, purpose="sale", target_area="Arabian Ranches 2"):
     bathrooms = clean_number(row.get("bathrooms_dom")) or header_metrics.get("bathrooms") or extract_baths_from_body(body)
     property_size = clean_number(row.get("size_dom")) or header_metrics.get("property_size_sqft")
     plot_from_description = extract_plot_from_description(body)
-    plot_size = plot_from_description or property_size
+    # plot_size_sqft is only set when explicitly found in the listing description.
+    # Never fall back to property_size (BUA) — they are completely different measurements.
+    # PPSF uses BUA (property_size) which is the Dubai/Property Finder standard.
     rent_frequency = extract_rent_frequency(body) if purpose == "rent" else None
     annual_rent = annualize_rent(price, rent_frequency) if purpose == "rent" else None
-    rent_per_sqft = calculate_price_per_sqft(annual_rent, plot_size) if purpose == "rent" else None
-    sale_price_per_sqft = calculate_price_per_sqft(price, plot_size) if purpose == "sale" else None
+    rent_per_sqft = calculate_price_per_sqft(annual_rent, property_size) if purpose == "rent" else None
+    sale_price_per_sqft = calculate_price_per_sqft(price, property_size) if purpose == "sale" else None
     price_per_sqft = rent_per_sqft if purpose == "rent" else sale_price_per_sqft
 
     description = extract_description(body)
@@ -210,7 +212,7 @@ def process_raw_row(row, purpose="sale", target_area="Arabian Ranches 2"):
         "bedrooms": clean_number(bedrooms),
         "bathrooms": clean_number(bathrooms),
         "property_size_sqft": clean_number(property_size),
-        "plot_size_sqft": clean_number(plot_size),
+        "plot_size_sqft": clean_number(plot_from_description),
         "price_per_sqft": clean_number(price_per_sqft),
         "sale_price_per_sqft": clean_number(sale_price_per_sqft),
         "rent_per_sqft": clean_number(rent_per_sqft),

@@ -1,0 +1,151 @@
+Location,Community,Area,Property Type,Bedrooms,Size sqft,Rental AED,Rental Yield %,Price per sqft,Status,Start Date,End Date,Duration Months,Purchase Price AED,predicted_type,prediction_confidence,prediction_reason
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4613,241500,8.33,,Renewed,"13 May, 2026","12 May,",202712,2900000.0,Possible Type 1,26,bedrooms match; BUA 4613 well above range — heavily extended or wrong type (max 3416)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1959,190000,10.0,,Renewed,"12 May, 2026","11 May,",202712,1900000.0,Likely Type 1M,50,bedrooms match; BUA 1959 within standard range 1386–2122
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5521,329600,6.98,,Renewed,"11 May, 2026","10 May,",202712,4700000.0,Possible Type 5,26,bedrooms match; BUA 5521 well above range — heavily extended or wrong type (max 4069)
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,6819,376750,8.12,,Renewed,"11 May, 2026","10 May,",202712,4600000.0,Likely Type 2,50,bedrooms match; BUA 6819 within standard range 4006–8612
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5538,93000,2.42,,Renewed,"10 May, 2026","9 Aug,",20263,3800000.0,Possible Type 2,26,bedrooms match; BUA 5538 well above range — heavily extended or wrong type (max 3493)
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4519,300000,8.29,,Renewed,"10 May, 2026","9 May,",202712,3600000.0,Likely Type 4,50,bedrooms match; BUA 4519 within standard range 4010–4708
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,167500,8.54,,New,"8 May, 2026","7 May,",202712,2000000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5336,1080000,23.27,,New,"5 May, 2026","4 May,",202936,4600000.0,Possible Type 3,42,bedrooms match; BUA 5336 slightly above range — possible extension (max 5159)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,3589,280000,10.36,,Renewed,"1 May, 2026","30 Apr,",202712,2700000.0,Possible Type 1E,34,bedrooms match; BUA 3589 above range — likely extended (max 2782)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1959,175000,4.67,,New,"1 May, 2026","30 Apr,",202712,3800000.0,Likely Type 1M,50,bedrooms match; BUA 1959 within standard range 1386–2122
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4360,255000,7.78,,New,"1 May, 2026","30 Apr,",202712,3300000.0,Possible Type 1,34,bedrooms match; BUA 4360 above range — likely extended (max 3394)
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4349,330000,8.72,,Renewed,"1 May, 2026","30 Apr,",202712,3800000.0,Possible Type 2,34,bedrooms match; BUA 4349 above range — likely extended (max 3483)
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4019,300000,7.98,,Renewed,"1 May, 2026","30 Apr,",202712,3800000.0,Possible Type 2,34,bedrooms match; BUA 4019 above range — likely extended (max 3483)
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1720,150000,9.73,,New,"1 May, 2026","30 Apr,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1720 within standard range 1386–2122
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,145000,9.97,,New,"1 May, 2026","30 Apr,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1720,150000,9.73,,New,"1 May, 2026","30 Apr,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1720 within standard range 1386–2122
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,7888,480000,8.73,,New,"1 May, 2026","30 Apr,",202712,5500000.0,Possible Type 1,26,bedrooms match; BUA 7888 well above range — heavily extended or wrong type (max 4654)
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5439,280000,6.8,,Renewed,"1 May, 2026","30 Apr,",202712,4099999.0,Possible Type 4,26,bedrooms match; BUA 5439 well above range — heavily extended or wrong type (max 3767)
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4650,268620,6.35,,Renewed,"1 May, 2026","30 Apr,",202712,4200000.0,Possible Type 4,34,bedrooms match; BUA 4650 above range — likely extended (max 3767)
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5192,330000,15.68,,New,"1 May, 2026","30 Apr,",202712,2100000.0,Possible Type 4,26,bedrooms match; BUA 5192 well above range — heavily extended or wrong type (max 3767)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2965,210000,7.51,,Renewed,"1 May, 2026","30 Apr,",202712,2800000.0,Possible Type 1E,42,bedrooms match; BUA 2965 slightly above range — possible extension (max 2782)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,180000,9.86,,Renewed,"30 Apr, 2026","29 Apr,",202712,1800000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1692,180000,8.57,,Renewed,"28 Apr, 2026","27 Apr,",202712,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1692 within standard range 1386–2122
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,180000,10.29,,New,"28 Apr, 2026","27 Apr,",202712,1800000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,4650,320000,7.21,,New,"27 Apr, 2026","26 Apr,",202712,4400000.0,Possible Type 5,34,bedrooms match; BUA 4650 above range — likely extended (max 4069)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1588,200000,13.5,,New,"27 Apr, 2026","27 Apr,",202825,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1588 within standard range 1386–2122
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2568,57137,3.36,,Renewed,"26 Apr, 2026","31 Jul,",20264,1700000.0,Likely Type 1E,50,bedrooms match; BUA 2568 within standard range 1995–3460
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,4628,360000,5.76,,New,"25 Apr, 2026","24 Apr,",202712,6300000.0,Likely Type 3,50,bedrooms match; BUA 4628 within standard range 3799–5159
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5644,310000,7.67,,Renewed,"24 Apr, 2026","23 Apr,",202712,4000000.0,Possible Type 4,34,bedrooms match; BUA 5644 above range — likely extended (max 4708)
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Commercial,,710,70205098,,9 /sqft,Renewed,"23 Apr, 2026","22 Apr,",202936,,Unknown,0,BUA 710 well below reference range 3559–4177
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Commercial,,1038,1416976136,,5 /sqft,Renewed,"23 Apr, 2026","22 Apr,",202936,,Unknown,0,BUA 1038 well below reference range 3559–4177
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Commercial,,278,24213887,,1 /sqft,Renewed,"23 Apr, 2026","22 Apr,",202936,,Unknown,0,BUA 278 well below reference range 3559–4177
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,5574,273000,7.51,,New,"20 Apr, 2026","19 Apr,",202712,3600000.0,Possible Type 1,26,bedrooms match; BUA 5574 well above range — heavily extended or wrong type (max 4177)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1957,163721,7.15,,Renewed,"20 Apr, 2026","19 Apr,",202712,2300000.0,Likely Type 1M,50,bedrooms match; BUA 1957 within standard range 1849–2043
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5165,314580,6.8,,Renewed,"18 Apr, 2026","17 Apr,",202712,4600000.0,Likely Type 4,50,bedrooms match; BUA 5165 within standard range 3912–5190
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1959,195000,12.94,,Renewed,"17 Apr, 2026","16 Apr,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1959 within standard range 1386–2122
+Rosa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,6889,370000,7.86,,New,"15 Apr, 2026","14 Apr,",202712,4700000.0,Possible Type 1,26,bedrooms match; BUA 6889 well above range — heavily extended or wrong type (max 4654)
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4284,212295,5.61,,Renewed,"15 Apr, 2026","14 Apr,",202712,3800000.0,Possible Type 1,34,bedrooms match; BUA 4284 above range — likely extended (max 3394)
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4333,300000,8.22,,Renewed,"15 Apr, 2026","14 Apr,",202712,3600000.0,Possible Type 2,34,bedrooms match; BUA 4333 above range — likely extended (max 3483)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1942,220000,10.39,,New,"15 Apr, 2026","14 May,",202713,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1942 within standard range 1849–2043
+Rosa,Arabian Ranches 2,Wadi Al Safa 7,Villa,6.0,8129,550000,8.08,,New,"15 Apr, 2026","14 Apr,",202712,6800000.0,Possible Type 5,34,bedrooms match; BUA 8129 above range — likely extended (max 6486)
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,4624,390000,12.19,,New,"14 Apr, 2026","13 Apr,",202712,3200000.0,Likely Type 3,50,bedrooms match; BUA 4624 within standard range 3799–5159
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4650,350000,9.72,,New,"11 Apr, 2026","10 Apr,",202712,3600000.0,Possible Type 4,34,bedrooms match; BUA 4650 above range — likely extended (max 3767)
+Rosa,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,7831,400000,6.11,,Renewed,"10 Apr, 2026","9 Apr,",202712,6500000.0,Possible Type 4,26,bedrooms match; BUA 7831 well above range — heavily extended or wrong type (max 5905)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1951,225000,9.68,,Renewed,"10 Apr, 2026","9 Apr,",202712,2300000.0,Likely Type 1M,50,bedrooms match; BUA 1951 within standard range 1849–2043
+Rosa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,7564,420000,9.88,,New,"9 Apr, 2026","8 Apr,",202712,4300000.0,Possible Type 1,26,bedrooms match; BUA 7564 well above range — heavily extended or wrong type (max 4654)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4650,335000,8.26,,New,"6 Apr, 2026","5 Apr,",202712,4099999.0,Possible Type 2,26,bedrooms match; BUA 4650 well above range — heavily extended or wrong type (max 3493)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4359,250000,7.16,,Renewed,"5 Apr, 2026","4 Apr,",202712,3500000.0,Possible Type 1,34,bedrooms match; BUA 4359 above range — likely extended (max 3416)
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,147000,10.08,,Renewed,"4 Apr, 2026","3 Apr,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Rosa,Arabian Ranches 2,Wadi Al Safa 7,Villa,6.0,7922,530000,7.8,,Renewed,"3 Apr, 2026","2 Apr,",202712,6800000.0,Possible Type 5,34,bedrooms match; BUA 7922 above range — likely extended (max 6486)
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4359,270000,7.34,,Renewed,"2 Apr, 2026","1 Apr,",202712,3700000.0,Possible Type 2,34,bedrooms match; BUA 4359 above range — likely extended (max 3424)
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,4624,390000,12.19,,New,"1 Apr, 2026","31 Mar,",202712,3200000.0,Likely Type 3,50,bedrooms match; BUA 4624 within standard range 3799–5159
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1959,185000,12.28,,Renewed,"1 Apr, 2026","31 Mar,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1959 within standard range 1386–2122
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,3282,230000,12.71,,New,"1 Apr, 2026","31 Mar,",202712,1800000.0,Likely Type 1E,50,bedrooms match; BUA 3282 within standard range 1995–3460
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,6889,420000,8.5,,Renewed,"1 Apr, 2026","31 Mar,",202712,4900000.0,Likely Type 2,50,bedrooms match; BUA 6889 within standard range 4006–8612
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1942,200000,9.74,,Renewed,"29 Mar, 2026","28 Mar,",202712,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1942 within standard range 1849–2043
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,77175,3.76,,Renewed,"27 Mar, 2026","26 Sep,",20266,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,6.0,8863,900000,11.76,,New,"25 Mar, 2026","24 Mar,",202712,7700000.0,Possible Type 5,26,bedrooms match; BUA 8863 well above range — heavily extended or wrong type (max 6486)
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4197,260000,7.0,,Renewed,"25 Mar, 2026","24 Mar,",202712,3700000.0,Possible Type 1,34,bedrooms match; BUA 4197 above range — likely extended (max 3296)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4650,310000,9.25,,Renewed,"23 Mar, 2026","22 Mar,",202712,3400000.0,Possible Type 2,26,bedrooms match; BUA 4650 well above range — heavily extended or wrong type (max 3493)
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,6536,252000,5.31,,Renewed,"22 Mar, 2026","21 Mar,",202712,4700000.0,Likely Type 2,50,bedrooms match; BUA 6536 within standard range 4006–8612
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4657,62022,1.71,,Renewed,"21 Mar, 2026","26 Jun,",20264,3600000.0,Possible Type 1,26,bedrooms match; BUA 4657 well above range — heavily extended or wrong type (max 3416)
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,6889,400000,8.5,,Renewed,"21 Mar, 2026","20 Mar,",202712,4700000.0,Possible Type 1,26,bedrooms match; BUA 6889 well above range — heavily extended or wrong type (max 4654)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1948,200000,9.74,,New,"20 Mar, 2026","19 Mar,",202712,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1948 within standard range 1849–2043
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,168000,8.84,,Renewed,"20 Mar, 2026","19 Mar,",202712,1900000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1946,185000,8.82,,Renewed,"20 Mar, 2026","19 Mar,",202712,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1946 within standard range 1849–2043
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,6.0,7922,900000,12.83,,New,"19 Mar, 2026","18 Mar,",202712,7000000.0,Possible Type 5,34,bedrooms match; BUA 7922 above range — likely extended (max 6486)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,170000,11.68,,New,"19 Mar, 2026","18 Mar,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5306,290000,7.42,,Renewed,"19 Mar, 2026","18 Mar,",202712,3900000.0,Possible Type 4,34,bedrooms match; BUA 5306 above range — likely extended (max 4708)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5241,350000,8.13,,New,"17 Mar, 2026","16 Mar,",202712,4300000.0,Possible Type 2,26,bedrooms match; BUA 5241 well above range — heavily extended or wrong type (max 3493)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2923,280000,9.82,,New,"17 Mar, 2026","16 Mar,",202712,2900000.0,Possible Type 1E,42,bedrooms match; BUA 2923 slightly above range — possible extension (max 2782)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4359,295000,12.83,,New,"17 Mar, 2026","16 Mar,",202712,2300000.0,Possible Type 1,34,bedrooms match; BUA 4359 above range — likely extended (max 3416)
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,3864,253000,7.44,,Renewed,"16 Mar, 2026","15 Mar,",202712,3400000.0,Likely Type 2,50,bedrooms match; BUA 3864 within standard range 3128–4361
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,7625,1240000,19.81,,New,"16 Mar, 2026","15 Mar,",202824,6300000.0,Possible Type 4,26,bedrooms match; BUA 7625 well above range — heavily extended or wrong type (max 5797)
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,7625,1240000,19.81,,New,"16 Mar, 2026","15 Mar,",202712,6300000.0,Possible Type 4,26,bedrooms match; BUA 7625 well above range — heavily extended or wrong type (max 5797)
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4251,152658,4.72,,New,"16 Mar, 2026","30 Sep,",20267,3200000.0,Possible Type 2,34,bedrooms match; BUA 4251 above range — likely extended (max 3424)
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4251,280000,8.65,,Renewed,"16 Mar, 2026","30 Sep,",20267,3200000.0,Possible Type 2,34,bedrooms match; BUA 4251 above range — likely extended (max 3424)
+Rosa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,7387,400000,8.36,,New,"15 Mar, 2026","14 Mar,",202712,4800000.0,Possible Type 1,26,bedrooms match; BUA 7387 well above range — heavily extended or wrong type (max 4654)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2616,108000,4.24,,Renewed,"15 Mar, 2026","14 Mar,",202712,2600000.0,Likely Type 1E,50,bedrooms match; BUA 2616 within standard range 1995–3460
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,4631,315000,9.0,,Renewed,"15 Mar, 2026","14 Mar,",202712,3500000.0,Likely Type 3,50,bedrooms match; BUA 4631 within standard range 3799–5159
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4029,140000,3.94,,Renewed,"14 Mar, 2026","13 Mar,",202712,3600000.0,Possible Type 1,34,bedrooms match; BUA 4029 above range — likely extended (max 3296)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5521,330000,6.99,,Renewed,"13 Mar, 2026","12 Mar,",202712,4700000.0,Possible Type 5,26,bedrooms match; BUA 5521 well above range — heavily extended or wrong type (max 4069)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1959,197500,9.47,,Renewed,"12 Mar, 2026","11 Mar,",202712,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1959 within standard range 1849–2043
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,6889,393000,8.35,,Renewed,"12 Mar, 2026","11 Mar,",202712,4700000.0,Possible Type 1,26,bedrooms match; BUA 6889 well above range — heavily extended or wrong type (max 4654)
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,8120,296700,6.2,,Renewed,"12 Mar, 2026","11 Mar,",202712,4800000.0,Likely Type 2,50,bedrooms match; BUA 8120 within standard range 4006–8612
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,7338,74175,1.39,,Renewed,"11 Mar, 2026","10 May,",20262,5300000.0,Likely Type 2,50,bedrooms match; BUA 7338 within standard range 4006–8612
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,11550,1450000,10.74,,New,"10 Mar, 2026","9 Mar,",202824,13500000.0,Possible Type 4,26,bedrooms match; BUA 11550 well above range — heavily extended or wrong type (max 5894)
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,180000,12.2,,New,"10 Mar, 2026","9 Mar,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,5319,147500,4.13,,Renewed,"7 Mar, 2026","7 Sep,",20267,3600000.0,Possible Type 1,34,bedrooms match; BUA 5319 above range — likely extended (max 4177)
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4023,320000,8.33,,Renewed,"6 Mar, 2026","5 Mar,",202712,3800000.0,Likely Type 2,50,bedrooms match; BUA 4023 within standard range 3128–4361
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2530,230000,12.09,,New,"6 Mar, 2026","5 Mar,",202712,1900000.0,Likely Type 1E,50,bedrooms match; BUA 2530 within standard range 1995–3460
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4359,235000,6.52,,Renewed,"6 Mar, 2026","5 Mar,",202712,3600000.0,Possible Type 2,34,bedrooms match; BUA 4359 above range — likely extended (max 3424)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1951,210000,9.68,,Renewed,"5 Mar, 2026","4 Mar,",202712,2200000.0,Likely Type 1M,50,bedrooms match; BUA 1951 within standard range 1849–2043
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2530,200000,9.09,,Renewed,"5 Mar, 2026","4 Mar,",202712,2200000.0,Likely Type 1E,50,bedrooms match; BUA 2530 within standard range 1995–3460
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,185000,6.38,,New,"2 Mar, 2026","1 Mar,",202712,2900000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Rosa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,8191,820000,14.32,,Renewed,"1 Mar, 2026","28 Feb,",202824,5700000.0,Possible Type 1,26,bedrooms match; BUA 8191 well above range — heavily extended or wrong type (max 4654)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,175000,5.83,,New,"1 Mar, 2026","28 Feb,",202712,3000000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2869,240000,7.16,,Renewed,"1 Mar, 2026","28 Feb,",202712,3400000.0,Likely Type 1E,50,bedrooms match; BUA 2869 within standard range 1995–3460
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5729,187617,2.68,,New,"1 Mar, 2026","30 Sep,",20267,7000000.0,Possible Type 4,34,bedrooms match; BUA 5729 above range — likely extended (max 4708)
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,7514,400000,7.51,,Renewed,"1 Mar, 2026","28 Feb,",202712,5300000.0,Unknown,20,bedrooms match
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,8379,435000,8.4,,Renewed,"1 Mar, 2026","28 Feb,",202712,5200000.0,Likely Type 2,50,bedrooms match; BUA 8379 within standard range 4006–8612
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1951,200000,10.0,,Renewed,"1 Mar, 2026","28 Feb,",202712,2000000.0,Likely Type 1M,50,bedrooms match; BUA 1951 within standard range 1849–2043
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1956,165685,9.83,,Renewed,"1 Mar, 2026","28 Feb,",202712,1700000.0,Likely Type 1M,50,bedrooms match; BUA 1956 within standard range 1849–2043
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,3860,260000,6.75,,New,"1 Mar, 2026","28 Feb,",202712,3900000.0,Likely Type 1,50,bedrooms match; BUA 3860 within standard range 3559–4177
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4359,280000,8.14,,New,"28 Feb, 2026","27 Feb,",202712,3400000.0,Possible Type 1,34,bedrooms match; BUA 4359 above range — likely extended (max 3416)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,3305,60000,2.82,,Renewed,"28 Feb, 2026","27 May,",20263,2100000.0,Likely Type 1E,50,bedrooms match; BUA 3305 within standard range 1995–3460
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2960,250000,7.41,,Renewed,"28 Feb, 2026","27 Feb,",202712,3400000.0,Possible Type 1E,42,bedrooms match; BUA 2960 slightly above range — possible extension (max 2782)
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5161,350000,6.73,,New,"28 Feb, 2026","27 Feb,",202712,5200000.0,Likely Type 4,50,bedrooms match; BUA 5161 within standard range 3912–5190
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4359,660000,17.49,,New,"28 Feb, 2026","27 Feb,",202824,3800000.0,Possible Type 2,34,bedrooms match; BUA 4359 above range — likely extended (max 3493)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2952,275000,10.17,,New,"27 Feb, 2026","26 Feb,",202712,2700000.0,Possible Type 1E,42,bedrooms match; BUA 2952 slightly above range — possible extension (max 2782)
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4989,303000,8.14,,New,"26 Feb, 2026","25 Feb,",202712,3700000.0,Possible Type 4,42,bedrooms match; BUA 4989 slightly above range — possible extension (max 4708)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4650,340000,8.38,,New,"24 Feb, 2026","23 Feb,",202712,4099999.0,Possible Type 2,26,bedrooms match; BUA 4650 well above range — heavily extended or wrong type (max 3493)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5473,139808,1.82,,New,"24 Feb, 2026","10 Nov,",20269,7700000.0,Possible Type 5,26,bedrooms match; BUA 5473 well above range — heavily extended or wrong type (max 4069)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1949,215000,10.41,,New,"23 Feb, 2026","22 Feb,",202712,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1949 within standard range 1849–2043
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5759,242000,9.88,,Renewed,"22 Feb, 2026","21 Feb,",202712,2500000.0,Possible Type 4,34,bedrooms match; BUA 5759 above range — likely extended (max 4708)
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5940,330000,7.36,,Renewed,"21 Feb, 2026","20 Feb,",202712,4500000.0,Possible Type 4,34,bedrooms match; BUA 5940 above range — likely extended (max 4708)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4359,252000,7.6,,Renewed,"20 Feb, 2026","19 Feb,",202712,3300000.0,Possible Type 1,34,bedrooms match; BUA 4359 above range — likely extended (max 3416)
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1867,182000,12.13,,Renewed,"20 Feb, 2026","19 Feb,",202712,1500000.0,Likely Type 1M,50,bedrooms match; BUA 1867 within standard range 1386–2122
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,6705,500000,10.79,,New,"20 Feb, 2026","19 Feb,",202712,4600000.0,Likely Type 2,50,bedrooms match; BUA 6705 within standard range 4006–8612
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4494,305000,7.49,,Renewed,"19 Feb, 2026","18 Feb,",202712,4099999.0,Possible Type 2,34,bedrooms match; BUA 4494 above range — likely extended (max 3483)
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1516,270000,15.0,,Renewed,"17 Feb, 2026","16 Aug,",202718,1800000.0,Likely Type 1M,50,bedrooms match; BUA 1516 within standard range 1386–2122
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4650,240000,6.93,,Renewed,"16 Feb, 2026","15 Feb,",202712,3500000.0,Possible Type 1,26,bedrooms match; BUA 4650 well above range — heavily extended or wrong type (max 3416)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,3520,64616,3.54,,Renewed,"16 Feb, 2026","15 May,",20263,1800000.0,Possible Type 1E,42,bedrooms match; BUA 3520 slightly above range — possible extension (max 3460)
+Samara,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4178,280000,10.81,,New,"16 Feb, 2026","15 Feb,",202712,2600000.0,Possible Type 1,42,bedrooms match; BUA 4178 slightly above range — possible extension (max 4177)
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,195000,9.29,,Renewed,"15 Feb, 2026","14 Feb,",202712,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4604,300000,7.26,,Renewed,"15 Feb, 2026","14 Feb,",202712,4099999.0,Possible Type 2,26,bedrooms match; BUA 4604 well above range — heavily extended or wrong type (max 3483)
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5708,345000,8.73,,New,"13 Feb, 2026","12 Feb,",202712,4000000.0,Possible Type 4,34,bedrooms match; BUA 5708 above range — likely extended (max 4708)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2950,260000,9.23,,New,"12 Feb, 2026","11 Feb,",202712,2800000.0,Possible Type 1E,42,bedrooms match; BUA 2950 slightly above range — possible extension (max 2782)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,3207,230000,13.08,,New,"12 Feb, 2026","11 Feb,",202712,1800000.0,Likely Type 1E,50,bedrooms match; BUA 3207 within standard range 1995–3460
+Camelia 2,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,170000,8.29,,New,"12 Feb, 2026","11 Feb,",202712,2100000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Rosa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,7776,420000,7.83,,New,"10 Feb, 2026","9 Feb,",202712,5400000.0,Possible Type 1,26,bedrooms match; BUA 7776 well above range — heavily extended or wrong type (max 4654)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4359,355000,9.41,,New,"9 Feb, 2026","8 Feb,",202712,3800000.0,Possible Type 2,34,bedrooms match; BUA 4359 above range — likely extended (max 3493)
+Azalea,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,3855,226985,5.97,,Renewed,"9 Feb, 2026","8 Feb,",202712,3800000.0,Possible Type 2,42,bedrooms match; BUA 3855 slightly above range — possible extension (max 3483)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,2954,260000,9.29,,New,"9 Feb, 2026","8 Feb,",202712,2800000.0,Possible Type 1E,42,bedrooms match; BUA 2954 slightly above range — possible extension (max 2782)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,4644,390000,8.79,,Renewed,"8 Feb, 2026","7 Feb,",202712,4400000.0,Possible Type 5,34,bedrooms match; BUA 4644 above range — likely extended (max 4069)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5368,340000,7.22,,Renewed,"8 Feb, 2026","7 Feb,",202712,4700000.0,Possible Type 5,26,bedrooms match; BUA 5368 well above range — heavily extended or wrong type (max 4069)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5148,375000,8.29,,New,"7 Feb, 2026","6 Feb,",202712,4500000.0,Possible Type 5,34,bedrooms match; BUA 5148 above range — likely extended (max 4069)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4359,330000,8.61,,New,"5 Feb, 2026","4 Feb,",202712,3800000.0,Possible Type 2,34,bedrooms match; BUA 4359 above range — likely extended (max 3493)
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,8872,1400000,15.73,,New,"5 Feb, 2026","4 Feb,",202824,8900000.0,Possible Type 4,26,bedrooms match; BUA 8872 well above range — heavily extended or wrong type (max 5797)
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,8447,500000,9.01,,New,"4 Feb, 2026","3 Feb,",202712,5600000.0,Likely Type 2,50,bedrooms match; BUA 8447 within standard range 4006–8612
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,5900,175000,3.89,,Renewed,"4 Feb, 2026","5 Aug,",20267,4500000.0,Possible Type 4,34,bedrooms match; BUA 5900 above range — likely extended (max 4708)
+Casa,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4360,250000,6.6,,Renewed,"4 Feb, 2026","3 Feb,",202712,3800000.0,Likely Type 4,50,bedrooms match; BUA 4360 within standard range 4010–4708
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,4.0,4359,310000,8.52,,New,"2 Feb, 2026","1 Feb,",202712,3600000.0,Possible Type 2,34,bedrooms match; BUA 4359 above range — likely extended (max 3493)
+Lila,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,5328,305000,9.53,,Renewed,"1 Feb, 2026","31 Jan,",202712,3200000.0,Possible Type 5,26,bedrooms match; BUA 5328 well above range — heavily extended or wrong type (max 4069)
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1507,190000,14.07,,New,"1 Feb, 2026","31 Jan,",202712,1400000.0,Likely Type 1M,50,bedrooms match; BUA 1507 within standard range 1386–2122
+Camelia,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1798,380000,11.41,,New,"1 Feb, 2026","31 Jan,",202824,3300000.0,Likely Type 1M,50,bedrooms match; BUA 1798 within standard range 1386–2122
+Rasha,Arabian Ranches 2,Wadi Al Safa 7,Villa,5.0,13700,900000,14.46,,New,"1 Feb, 2026","31 Jan,",202824,6200000.0,Possible Type 4,26,bedrooms match; BUA 13700 well above range — heavily extended or wrong type (max 5797)
+Yasmin,Arabian Ranches 2,Wadi Al Safa 7,Villa,6.0,8058,1280000,11.13,,New,"1 Feb, 2026","31 Jan,",202824,11500000.0,Possible Type 5,34,bedrooms match; BUA 8058 above range — likely extended (max 6486)
+Palma,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,4359,300000,7.84,,New,"1 Feb, 2026","31 Jan,",202712,3800000.0,Possible Type 2,34,bedrooms match; BUA 4359 above range — likely extended (max 3424)
+Reem,Arabian Ranches 2,Wadi Al Safa 7,Villa,3.0,1953,195000,8.78,,Renewed,"1 Feb, 2026","31 Jan,",202712,2200000.0,Likely Type 1M,50,bedrooms match; BUA 1953 within standard range 1849–2043

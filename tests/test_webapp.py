@@ -374,9 +374,9 @@ def test_build_market_context_supports_similar_community_scope(tmp_path):
 
     context = build_market_context(enquiry, matches_df, market_file=market_file)
 
-    assert context["scope"]["comp_communities"] == ["Lila", "Palma"]
-    assert context["recent_transaction_stats"]["price"]["count"] == 2
-    assert {row["community"] for row in context["recent_transactions"]} == {"Palma", "Lila"}
+    assert context["scope"]["comp_communities"] == ["Casa", "Lila", "Palma"]
+    assert context["recent_transaction_stats"]["price"]["count"] == 3
+    assert {row["community"] for row in context["recent_transactions"]} == {"Palma", "Lila", "Casa"}
 
 
 def test_build_market_context_supports_custom_community_scope(tmp_path):

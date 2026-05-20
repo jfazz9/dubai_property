@@ -124,13 +124,13 @@ SOFT_INTENT_GROUPS = {
             "appliances included": 8,
             "landscaped": 6,
             "clean": 8,
-            "spacious": 6,
-            "bright": 6,
-            "natural light": 6,
-            "open-plan": 5,
-            "open plan": 5,
+            "spacious": 3,
+            "bright": 3,
+            "natural light": 3,
+            "open-plan": 3,
+            "open plan": 3,
             "family home": 5,
-            "prime location": 4,
+            "prime location": 2,
             "quiet": 4,
             "internal location": 4,
             "covered parking": 3,
@@ -604,12 +604,22 @@ def price_fit_points(price, budget, purpose):
     ratio = price / budget
 
     if purpose == "sale":
-        if 0.85 <= ratio <= 1:
-            return 18, ["near the stated budget"]
-        if 0.7 <= ratio < 0.85:
-            return 8, ["comfortably under budget"]
-        if ratio < 0.7:
-            return -10, ["well below budget, likely lower-spec alternative"]
+        near_floor = 0.85
+        value_floor = 0.7
+        stretch_ceiling = 1.08
+    else:
+        near_floor = 0.9
+        value_floor = 0.8
+        stretch_ceiling = 1.15
+
+    if near_floor <= ratio <= 1:
+        return 18, ["near the stated budget"]
+    if 1 < ratio <= stretch_ceiling:
+        return 16, ["premium stretch option"]
+    if value_floor <= ratio < near_floor:
+        return 8, ["comfortably under budget"]
+    if ratio < value_floor:
+        return -10, ["well below budget, likely lower-spec alternative"]
 
     return 0, []
 
@@ -666,6 +676,31 @@ def soft_intent_points(row, enquiry):
         reasons.append(f"soft weak clues: {', '.join(penalties[:6])}")
 
     return max(min(score, 55), -35), reasons
+
+
+def intent_price_position_points(price, budget, enquiry):
+    if price is None or not budget:
+        return 0, []
+
+    intents = requested_soft_intents(enquiry)
+
+    if "move_in_ready" not in intents:
+        return 0, []
+
+    ratio = price / budget
+    purpose = enquiry.get("purpose", "rent")
+    stretch_ceiling = 1.08 if purpose == "sale" else 1.15
+
+    if 1 < ratio <= stretch_ceiling:
+        return 18, ["move-in ready premium stretch"]
+    if 0.9 <= ratio <= 1:
+        return 8, ["move-in ready near budget"]
+    if 0.8 <= ratio < 0.9:
+        return -6, ["move-in ready lower-budget option"]
+    if ratio < 0.8:
+        return -14, ["move-in ready well below budget"]
+
+    return 0, []
 
 
 def phrase_in_text(phrase, text):
@@ -726,7 +761,7 @@ def score_listing(row, enquiry):
             score += 30
             reasons.append("within budget")
         elif stretch_budget and price <= stretch_budget:
-            score += 15
+            score += 24
             reasons.append(f"within stretch budget ({price:,})")
         else:
             gap = price - stretch_budget if stretch_budget else price - budget
@@ -756,6 +791,10 @@ def score_listing(row, enquiry):
     soft_score, soft_reasons = soft_intent_points(row, enquiry)
     score += soft_score
     reasons.extend(soft_reasons)
+
+    intent_price_score, intent_price_reasons = intent_price_position_points(price, budget, enquiry)
+    score += intent_price_score
+    reasons.extend(intent_price_reasons)
 
     matched_outdoor = outdoor_matches(row)
 
@@ -813,7 +852,7 @@ def match_enquiry(master_df, enquiry, limit=5):
     if result_df.empty:
         return result_df
 
-    sort_columns = ["match_score", "budget_distance" if purpose == "sale" else "budget_gap"]
+    sort_columns = ["match_score", "budget_distance"]
     ascending = [False, True]
 
     return result_df.sort_values(sort_columns, ascending=ascending).head(limit)
