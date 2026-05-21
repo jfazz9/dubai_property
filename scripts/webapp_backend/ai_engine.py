@@ -51,13 +51,14 @@ CLIENT_REPORT_SCHEMA = {
                         "required": ["date", "price", "size", "ppsf"]
                     }
                 },
+                "community_scope": {"type": "string"},
                 "range": {"type": "string"},
                 "average_price": {"type": "string"},
                 "average_ppsf": {"type": "string"},
                 "layout_note": {"type": "string"},
                 "narrative": {"type": "string"}
             },
-            "required": ["heading", "transactions", "range", "average_price", "average_ppsf", "layout_note", "narrative"]
+            "required": ["heading", "community_scope", "transactions", "range", "average_price", "average_ppsf", "layout_note", "narrative"]
         },
         "inventory_section": {
             "type": "object",
@@ -531,7 +532,7 @@ def ai_client_report_prompt(
         "market_context": market_context,
         "style_reference": {
             "structure": [
-                "01 — RECENT TRANSACTION DATA: recent sold transactions table with summary stats and a narrative paragraph",
+                "01 — RECENT TRANSACTION DATA: recent sold transactions table with summary stats and a narrative paragraph. community_scope must list the exact communities the transaction data covers, e.g. 'Casa · Lila · Palma' — taken from market_context.scope.comp_communities.",
                 "02 — CURRENT INVENTORY: listing cards for primary community options, each with label, price, description tag, stats line, and narrative; followed by a community summary paragraph",
                 "03 — STRONGEST CURRENT ALTERNATIVE: intro paragraph, then listing cards in the same format for the best alternative community/type, followed by a summary paragraph",
                 "04 — INVENTORY COMPARISON: comparison table with rows for each metric (Asking Price, Size, AED/sqft, Beds/Baths, Availability, Active Listings) and columns per option",

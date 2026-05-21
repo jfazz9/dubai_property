@@ -728,6 +728,7 @@
       const txnHtml = `
         <section class="report-section">
           ${renderSectionHeading("01", txn.heading || "RECENT TRANSACTION DATA")}
+          ${txn.community_scope ? `<div class="report-scope-tag">📍 ${escapeHtml(txn.community_scope)}</div>` : ""}
           <table class="data-table">
             <thead><tr><th>DATE</th><th>SOLD PRICE (AED)</th><th>SIZE (sqft)</th><th>AED/sqft</th></tr></thead>
             <tbody>${txnTableRows}</tbody>
