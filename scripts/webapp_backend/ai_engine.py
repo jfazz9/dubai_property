@@ -341,6 +341,15 @@ def ai_fallback_prompt(
                 if url
             ],
         }
+    else:
+        result["report_context"] = {
+            "scenario": "fallback",
+            "ranked_urls": [
+                url
+                for url in enriched_df["url"].head(limit).tolist()
+                if url
+            ],
+        }
 
     return result
 
@@ -619,7 +628,25 @@ def ai_agent_plan_prompt(
     enquiry = parse_prompt(text, selected_purpose, scenario_intent, market_scope, market_communities, listing_scope, listing_communities)
     enquiry["analysis_focus"] = scenario_config["focus"]
 
-    matches_df, master_df, path = build_matches_dataframe(dict(enquiry), max(limit, DEFAULT_AI_SHORTLIST_LIMIT))
+    shortlist_limit = max(limit, DEFAULT_AI_SHORTLIST_LIMIT)
+
+    if scenario == "fallback":
+        master_df, path = _read_master(enquiry["purpose"])
+        matches_df = build_budget_fallback_dataframe(enquiry, master_df, limit=shortlist_limit)
+        enquiry = dict(enquiry)
+        enquiry["preferred_category"] = "townhouse"
+        enquiry["strict_category"] = True
+    else:
+        if scenario == "budget_reality":
+            enquiry["budget_reality_mode"] = True
+
+        matches_df, master_df, path = build_matches_dataframe(dict(enquiry), shortlist_limit)
+
+        if scenario == "budget_reality" or enquiry.get("budget_reality_mode"):
+            reality_df = build_budget_reality_primary_dataframe(enquiry, master_df, limit=shortlist_limit)
+
+            if not reality_df.empty:
+                matches_df = reality_df
 
     if matches_df.empty:
         raise RuntimeError("No suitable rows were found for this agent plan.")
