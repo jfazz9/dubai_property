@@ -19,8 +19,10 @@
     const quickCommunity = document.querySelector("#quick-community");
     const quickCategory  = document.querySelector("#quick-category");
     const aiButton       = document.querySelector("#ai-feedback");
-    const estimateButton = document.querySelector("#ai-estimate");
-    const estimatePanel  = document.querySelector("#estimate-panel");
+    const estimateButton    = document.querySelector("#ai-estimate");
+    const estimatePanel     = document.querySelector("#estimate-panel");
+    const oppScanButton     = document.querySelector("#opp-scan");
+    const opportunityPanel  = document.querySelector("#opportunity-panel");
     const aiReportButton = document.querySelector("#ai-report");
     const clientReportButton = document.querySelector("#client-report");
     const scenarioButtons = document.querySelectorAll(".scenario-button");
@@ -298,6 +300,8 @@
       aiPanel.innerHTML = "";
       estimatePanel.hidden = true;
       estimatePanel.innerHTML = "";
+      opportunityPanel.hidden = true;
+      opportunityPanel.innerHTML = "";
       ownerPanel.innerHTML = "";
       error.hidden = true;
       error.textContent = "";
@@ -1087,6 +1091,107 @@
       }
     }
 
+    async function runOpportunityScan() {
+      const token = activeApiKey || tokenBox.value.trim();
+      if (!token) { error.hidden = false; error.textContent = "Add and check an OpenAI API key first (AI key button above)."; return; }
+      oppScanButton.disabled = true;
+      oppScanButton.textContent = "Scanning…";
+      error.hidden = true;
+      opportunityPanel.hidden = false;
+      opportunityPanel.innerHTML = `<div style="color:#c0411a;font-size:13px;">Scanning database for poachable listings…</div>`;
+
+      try {
+        const res = await fetch("/api/opportunity-scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: token,
+            purpose_filter: "both",
+            limit: 15,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || "Opportunity scan failed.");
+
+        const opps = data.opportunities || [];
+        const scanNote = data.scan_note || "";
+        const scannedCount = data.total_active_scanned || 0;
+        const candidateCount = data.candidates_sent_to_ai || 0;
+
+        const typeLabels = {
+          stale_overpriced: "Stale + Overpriced",
+          stale_listing: "Stale Listing",
+          overpriced: "Overpriced",
+          weak_listing: "Weak Listing",
+          motivated_seller: "Motivated Seller",
+        };
+
+        function fmtPrice(price, currency) {
+          if (!price) return "—";
+          const n = Number(price);
+          const suffix = currency === "AED/yr" ? "/yr" : "";
+          if (n >= 1_000_000) return "AED " + (n / 1_000_000).toFixed(2).replace(/\.?0+$/, "") + "M" + suffix;
+          if (n >= 1_000) return "AED " + (n / 1_000).toFixed(0) + "K" + suffix;
+          return "AED " + n.toLocaleString() + suffix;
+        }
+
+        function stalePill(days) {
+          if (days == null) return "";
+          if (days >= 60) return `<span class="opp-pill stale">${days}d on market</span>`;
+          if (days >= 30) return `<span class="opp-pill stale">${days}d on market</span>`;
+          return `<span class="opp-pill">${days}d on market</span>`;
+        }
+
+        function pricePill(pct, price, currency) {
+          if (!price) return "";
+          const priceStr = fmtPrice(price, currency);
+          if (pct != null && pct > 5) return `<span class="opp-pill overpriced">${priceStr} (+${pct}% vs median)</span>`;
+          return `<span class="opp-pill">${priceStr}</span>`;
+        }
+
+        const cards = opps.map(opp => {
+          const score = opp.opportunity_score || 0;
+          const typeLabel = typeLabels[opp.opportunity_type] || (opp.opportunity_type || "Opportunity").replace(/_/g, " ");
+          const beds = opp.bedrooms ? `${opp.bedrooms} bed · ` : "";
+          const sqft = opp.property_size_sqft ? `${opp.property_size_sqft.toLocaleString()} sqft` : "";
+          const statsLine = [beds + opp.community, opp.predicted_type, sqft].filter(Boolean).join(" · ");
+
+          return `
+  <div class="opp-card">
+    <div class="opp-card-header">
+      <div class="opp-score-badge">${score}</div>
+      <div class="opp-headline">${escapeHtml(opp.headline || "Opportunity")}</div>
+    </div>
+    <div><span class="opp-type-badge">${escapeHtml(typeLabel)}</span></div>
+    <div class="opp-stats">
+      ${stalePill(opp.days_on_market)}
+      ${pricePill(opp.price_vs_median_pct, opp.price, opp.price_currency)}
+      ${statsLine ? `<span class="opp-pill">${escapeHtml(statsLine)}</span>` : ""}
+    </div>
+    <div class="opp-reason">${escapeHtml(opp.reason || "")}</div>
+    <div class="opp-approach">→ ${escapeHtml(opp.approach || "")}</div>
+    ${opp.talking_point ? `<div class="opp-talking-point">"${escapeHtml(opp.talking_point)}"</div>` : ""}
+    <div class="opp-agent">
+      <strong>${escapeHtml(opp.agent_name || "Unknown agent")}</strong>
+      ${opp.agency_name ? ` · ${escapeHtml(opp.agency_name)}` : ""}
+    </div>
+  </div>`;
+        }).join("");
+
+        opportunityPanel.innerHTML = `
+  <h2>Opportunity Scan <span style="font-size:12px;font-weight:400;color:#c0411a;">${opps.length} leads identified</span></h2>
+  <p class="opp-scan-note">Scanned ${scannedCount} active listings · ${candidateCount} candidates analysed${scanNote ? " · " + escapeHtml(scanNote) : ""}</p>
+  <div class="opp-grid">${cards || "<p style='color:var(--muted);font-size:13px;'>No strong opportunities found — try running a fresh scrape to update listing data.</p>"}</div>`;
+      } catch (err) {
+        error.hidden = false;
+        error.textContent = err.message;
+        opportunityPanel.hidden = true;
+      } finally {
+        oppScanButton.disabled = false;
+        oppScanButton.textContent = "Opportunity scan";
+      }
+    }
+
     button.addEventListener("click", runSearch);
     quickButton.addEventListener("click", runQuickQuery);
     clearButton.addEventListener("click", clearPage);
@@ -1099,6 +1204,7 @@
     fallbackResults.addEventListener("click", handleListingActionClick);
     aiButton.addEventListener("click", () => { ensureApiKeyVisible(); runAiFeedback(); });
     estimateButton.addEventListener("click", () => { ensureApiKeyVisible(); runEstimate(); });
+    oppScanButton.addEventListener("click", () => { ensureApiKeyVisible(); runOpportunityScan(); });
     aiReportButton.addEventListener("click", () => { ensureApiKeyVisible(); runBuildReport(); });
     clientReportButton.addEventListener("click", () => { ensureApiKeyVisible(); runClientReport(); });
     scenarioButtons.forEach((btn) => btn.addEventListener("click", () => { ensureApiKeyVisible(); runScenario(btn.dataset.scenario, btn); }));

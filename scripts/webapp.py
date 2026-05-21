@@ -28,6 +28,7 @@ from webapp_backend import (
     match_prompt,
     metric_html,
     money,
+    opportunity_scan,
     parse_prompt,
     quick_listing_query,
     rows_payload,
@@ -308,7 +309,7 @@ class AppHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlparse(self.path).path
 
-        if path not in {"/api/match", "/api/quick-query", "/api/ai-feedback", "/api/ai-fallback", "/api/ai-scenario", "/api/ai-scenario-rank", "/api/ai-scenario-report", "/api/client-report", "/api/check-openai", "/api/owner-lookup", "/api/estimate"}:
+        if path not in {"/api/match", "/api/quick-query", "/api/ai-feedback", "/api/ai-fallback", "/api/ai-scenario", "/api/ai-scenario-rank", "/api/ai-scenario-report", "/api/client-report", "/api/check-openai", "/api/owner-lookup", "/api/estimate", "/api/opportunity-scan"}:
             self.send_error(404)
             return
 
@@ -409,6 +410,14 @@ class AppHandler(BaseHTTPRequestHandler):
                     selected_purpose=payload.get("purpose", "sale"),
                     api_key=payload.get("api_key"),
                     extra_communities=payload.get("extra_communities", []),
+                )
+            elif path == "/api/opportunity-scan":
+                result = opportunity_scan(
+                    api_key=payload.get("api_key"),
+                    community_filter=payload.get("community_filter") or None,
+                    beds_filter=payload.get("beds_filter") or None,
+                    purpose_filter=payload.get("purpose_filter", "both"),
+                    limit=int(payload.get("limit", 15)),
                 )
             else:
                 result = match_prompt(

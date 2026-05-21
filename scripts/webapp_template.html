@@ -77,7 +77,10 @@
       <span class="wf-step" id="wf-3">③ Build Report</span>
       <span class="wf-arrow">→</span>
       <span class="wf-step" id="wf-4">④ Client Report</span>
-      <button class="chip estimate" id="ai-estimate" type="button" style="margin-left:auto">Estimate value</button>
+      <div class="wf-tools" style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+        <button class="chip estimate" id="ai-estimate" type="button">Estimate value</button>
+        <button class="chip opportunity" id="opp-scan" type="button">Opportunity scan</button>
+      </div>
     </div>
 
     <!-- Main search card -->
@@ -253,6 +256,7 @@
     </section>
     <section class="ai-panel" id="ai-panel" hidden></section>
     <section class="estimate-panel" id="estimate-panel" hidden></section>
+    <section class="opportunity-panel" id="opportunity-panel" hidden></section>
     <h2 class="section-title" id="best-shortlist-title" __RESPONSE_HIDDEN__>Best Shortlist</h2>
     <section class="error" id="error" __ERROR_HIDDEN__>__ERROR_HTML__</section>
     <div class="spinner" id="spinner"></div>

@@ -344,6 +344,8 @@
     .chip.general:hover { background: #fffaf2; }
     .chip.estimate { border-color: #6d3bbf; color: #6d3bbf; }
     .chip.estimate:hover { background: #f5f0ff; }
+    .chip.opportunity { border-color: #c0411a; color: #c0411a; }
+    .chip.opportunity:hover { background: #fff4f0; }
     /* Vertical divider between scenarios and report actions */
     .ai-divider {
       width: 1px;
@@ -472,6 +474,84 @@
     .estimate-comps th { text-align: left; color: var(--muted); font-weight: 600; padding: 3px 6px; border-bottom: 1px solid var(--line); }
     .estimate-comps td { padding: 3px 6px; border-bottom: 1px solid var(--line); }
     .estimate-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #6d3bbf; margin: 8px 0 3px; }
+
+    /* ── Opportunity panel ── */
+    .opportunity-panel {
+      border-left: 4px solid #c0411a;
+      background: #fff9f7;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      border-radius: 0 6px 6px 0;
+    }
+    .opportunity-panel h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; color: #7a2210; }
+    .opportunity-panel .opp-scan-note { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .opp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+    .opp-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px 13px;
+      position: relative;
+    }
+    .opp-card-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .opp-score-badge {
+      min-width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #c0411a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .opp-headline { font-size: 12px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+    .opp-type-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #fde8df;
+      color: #7a2210;
+      margin-bottom: 6px;
+    }
+    .opp-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; line-height: 1.5; }
+    .opp-meta strong { color: var(--ink); }
+    .opp-reason { font-size: 12px; color: #333; margin-bottom: 6px; line-height: 1.45; }
+    .opp-approach { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 4px; }
+    .opp-talking-point {
+      font-size: 11px;
+      color: #3d5a52;
+      background: #f0faf6;
+      border-left: 3px solid var(--accent);
+      padding: 5px 8px;
+      border-radius: 0 4px 4px 0;
+      line-height: 1.4;
+    }
+    .opp-agent {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 7px;
+      padding-top: 7px;
+      border-top: 1px solid var(--line);
+    }
+    .opp-agent strong { color: #c0411a; }
+    .opp-stats { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+    .opp-pill {
+      font-size: 10px;
+      background: #f4f4f4;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 1px 7px;
+      color: var(--ink);
+    }
+    .opp-pill.stale { background: #fff3cd; border-color: #e8c84a; color: #7a5a00; }
+    .opp-pill.overpriced { background: #fde8df; border-color: #e8835a; color: #7a2210; }
 
     /* ── Spinner ── */
     .spinner {

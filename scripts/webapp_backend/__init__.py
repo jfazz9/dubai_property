@@ -57,6 +57,7 @@ from .estimator import (  # noqa: F401
     parse_villa_type_from_text,
     valuation_estimate,
 )
+from .opportunity_scanner import opportunity_scan  # noqa: F401
 from .market_context import (  # noqa: F401
     active_match_communities,
     active_shortlist_market_summary,
