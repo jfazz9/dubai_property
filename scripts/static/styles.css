@@ -563,6 +563,9 @@
     }
     .opp-pill.stale { background: #fff3cd; border-color: #e8c84a; color: #7a5a00; }
     .opp-pill.overpriced { background: #fde8df; border-color: #e8835a; color: #7a2210; }
+    .opp-pill.agent-rating { background: #f0faf6; border-color: #85c5aa; color: #245c49; }
+    .opp-pill.agent-strong { background: #eef2ff; border-color: #a9b8ff; color: #33419a; }
+    .opp-pill.agent-weak { background: #fff4f3; border-color: #e8aaa4; color: #9b2c22; }
 
     /* ── Spinner ── */
     .spinner {

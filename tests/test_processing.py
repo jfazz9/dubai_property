@@ -2,6 +2,7 @@ from datetime import datetime
 
 from scripts.extract_listing_details import (
     calculate_listed_date,
+    extract_agent_profile,
     extract_bua_from_description,
     extract_header_metrics,
     extract_listed_age,
@@ -51,6 +52,31 @@ def test_extract_bua_ignores_tiny_type_number_false_positive():
     assert extract_bua_from_description("BUA: 4,363 sqft") == 4363
 
 
+def test_extract_agent_profile_reads_pf_agent_metrics():
+    body = "\n".join([
+        "Anastasiia Kurochkina",
+        "English, Russian, Ukrainian",
+        "4.3",
+        "3 Ratings",
+        "See agent properties (17)",
+        "12 Closed Deals",
+        "5 mins Response time",
+        "3M Total value",
+        "SuperAgent",
+        "Call",
+    ])
+
+    profile = extract_agent_profile(body)
+
+    assert profile["agent_rating"] == 4.3
+    assert profile["agent_review_count"] == 3
+    assert profile["agent_properties_count"] == 17
+    assert profile["agent_closed_deals"] == 12
+    assert profile["agent_response_time"] == "5 mins"
+    assert profile["agent_total_value"] == "3M"
+    assert profile["agent_is_superagent"] is True
+
+
 def test_process_raw_row_uses_dom_values():
     row = {
         "url": "https://example.com/listing",
@@ -62,6 +88,14 @@ def test_process_raw_row_uses_dom_values():
         "bathrooms_dom": "4 Baths",
         "size_dom": "4,359 sqft",
         "agent_name_dom": "Harry Chen",
+        "agent_profile_url_dom": "https://www.propertyfinder.ae/en/agent/harry-chen-123",
+        "agent_rating_dom": "4.8",
+        "agent_review_count_dom": "11 Ratings",
+        "agent_is_superagent_dom": "true",
+        "agent_properties_count_dom": "See agent properties (24)",
+        "agent_closed_deals_dom": "16",
+        "agent_response_time_dom": "5 mins",
+        "agent_total_value_dom": "14M",
         "agency_name_dom": "SEENIUN PROPERTIES L.L.C",
         "listed_age_dom": "2 months ago",
         "full_page_text": "\n".join([
@@ -84,6 +118,15 @@ def test_process_raw_row_uses_dom_values():
     assert processed["bathrooms"] == 4
     assert processed["property_size_sqft"] == 4359
     assert processed["agent_name"] == "Harry Chen"
+    assert processed["agent_profile_url"] == "https://www.propertyfinder.ae/en/agent/harry-chen-123"
+    assert processed["agent_rating"] == 4.8
+    assert processed["agent_review_count"] == 11
+    assert processed["agent_badge"] == "SuperAgent"
+    assert processed["agent_is_superagent"] is True
+    assert processed["agent_properties_count"] == 24
+    assert processed["agent_closed_deals"] == 16
+    assert processed["agent_response_time"] == "5 mins"
+    assert processed["agent_total_value"] == "14M"
     assert processed["agency_name"] == "SEENIUN PROPERTIES L.L.C"
     assert processed["listed_age"] == "2 months ago"
     assert processed["listed_date"] == "2026-03-14"

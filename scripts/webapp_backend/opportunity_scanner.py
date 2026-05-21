@@ -102,6 +102,97 @@ def _premium_justification_score(row: dict) -> int:
     return min(score, 10)
 
 
+def _to_float(value):
+    try:
+        if value is None or pd.isna(value):
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _to_int(value):
+    try:
+        if value is None or pd.isna(value):
+            return None
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _truthy(value) -> bool:
+    if value is None or pd.isna(value):
+        return False
+    return str(value).strip().lower() in {"true", "1", "yes", "superagent"}
+
+
+def _agent_strength_score(row: dict) -> int:
+    """Visible PF agent strength. Higher means the incumbent is harder to displace."""
+    score = 0
+    rating = _to_float(row.get("agent_rating"))
+    reviews = _to_int(row.get("agent_review_count"))
+    closed_deals = _to_int(row.get("agent_closed_deals"))
+    properties_count = _to_int(row.get("agent_properties_count"))
+    response_time = str(row.get("agent_response_time") or "").lower()
+
+    if rating is not None and rating >= 4.7 and (reviews or 0) >= 5:
+        score += 3
+    elif rating is not None and rating >= 4.4:
+        score += 2
+    elif rating is not None and rating >= 4.0:
+        score += 1
+
+    if reviews is not None and reviews >= 10:
+        score += 2
+    elif reviews is not None and reviews >= 3:
+        score += 1
+
+    if closed_deals is not None and closed_deals >= 10:
+        score += 2
+    elif closed_deals is not None and closed_deals >= 3:
+        score += 1
+
+    if properties_count is not None and properties_count >= 20:
+        score += 1
+
+    if _truthy(row.get("agent_is_superagent")) or "superagent" in str(row.get("agent_badge") or "").lower():
+        score += 2
+
+    if "min" in response_time or "hour" in response_time:
+        score += 1
+
+    return min(score, 10)
+
+
+def _agent_weakness_score(row: dict) -> int:
+    """Visible PF agent weakness. Higher makes a direct owner/relaunch angle stronger."""
+    rating = _to_float(row.get("agent_rating"))
+    reviews = _to_int(row.get("agent_review_count"))
+    closed_deals = _to_int(row.get("agent_closed_deals"))
+    strength = int(row.get("_agent_strength_score") or _agent_strength_score(row))
+    score = 0
+
+    if rating is None and reviews is None:
+        score += 2
+    elif rating is not None and rating < 4.0:
+        score += 3
+    elif rating is not None and rating < 4.4:
+        score += 1
+
+    if reviews is not None and reviews <= 1:
+        score += 1
+
+    if closed_deals is not None and closed_deals == 0:
+        score += 1
+
+    if strength >= 7:
+        score -= 2
+    elif strength >= 5:
+        score -= 1
+
+    return max(0, min(score, 6))
+
+
 def _rule_score(row: dict, community_medians: dict, purpose: str) -> int:
     """Compute a simple rule-based opportunity score (higher = better candidate)."""
     score = 0
@@ -152,6 +243,13 @@ def _rule_score(row: dict, community_medians: dict, purpose: str) -> int:
 
     if premium_justification >= 6:
         score -= 1
+
+    agent_weakness = int(row.get("_agent_weakness_score") or 0)
+    agent_strength = int(row.get("_agent_strength_score") or 0)
+    if days is not None and days >= 30:
+        score += min(2, agent_weakness)
+        if agent_strength >= 7:
+            score -= 1
 
     return score
 
@@ -208,7 +306,17 @@ def opportunity_scan(
     master_df = pd.concat(frames, ignore_index=True)
 
     # Coerce numeric columns
-    for col in ["price", "annual_rent", "bedrooms", "property_size_sqft", "plot_size_sqft"]:
+    for col in [
+        "price",
+        "annual_rent",
+        "bedrooms",
+        "property_size_sqft",
+        "plot_size_sqft",
+        "agent_rating",
+        "agent_review_count",
+        "agent_properties_count",
+        "agent_closed_deals",
+    ]:
         if col in master_df.columns:
             master_df[col] = pd.to_numeric(master_df[col], errors="coerce")
 
@@ -265,6 +373,8 @@ def opportunity_scan(
         row_data["_upgrade_potential_signal"] = _intent_signal(row_data, "upgrade_potential")
         row_data["_move_in_ready_signal"] = _intent_signal(row_data, "move_in_ready")
         row_data["_premium_justification_score"] = _premium_justification_score(row_data)
+        row_data["_agent_strength_score"] = _agent_strength_score(row_data)
+        row_data["_agent_weakness_score"] = _agent_weakness_score(row_data)
         signal_rows.append(row_data)
 
     master_df = pd.DataFrame(signal_rows)
@@ -334,6 +444,15 @@ def opportunity_scan(
             "listed_age_text": str(row.get("listed_age") or "Unknown"),
             "agent_name": str(row.get("agent_name") or "Unknown"),
             "agency_name": str(row.get("agency_name") or "Unknown"),
+            "agent_profile_url": str(row.get("agent_profile_url") or ""),
+            "agent_rating": float(row["agent_rating"]) if pd.notna(row.get("agent_rating")) else None,
+            "agent_review_count": int(row["agent_review_count"]) if pd.notna(row.get("agent_review_count")) else None,
+            "agent_badge": str(row.get("agent_badge") or ""),
+            "agent_is_superagent": bool(_truthy(row.get("agent_is_superagent"))),
+            "agent_properties_count": int(row["agent_properties_count"]) if pd.notna(row.get("agent_properties_count")) else None,
+            "agent_closed_deals": int(row["agent_closed_deals"]) if pd.notna(row.get("agent_closed_deals")) else None,
+            "agent_response_time": str(row.get("agent_response_time") or ""),
+            "agent_total_value": str(row.get("agent_total_value") or ""),
             "description_length": len(str(row.get("description") or "")),
             "description_snippet": str(row.get("description") or "")[:350],
             "rule_score": int(row.get("_opp_score", 0)),
@@ -343,6 +462,8 @@ def opportunity_scan(
                 "upgrade_potential": int(row.get("_upgrade_potential_signal", 0) or 0),
                 "move_in_ready": int(row.get("_move_in_ready_signal", 0) or 0),
                 "premium_justification": int(row.get("_premium_justification_score", 0) or 0),
+                "agent_strength": int(row.get("_agent_strength_score", 0) or 0),
+                "agent_weakness": int(row.get("_agent_weakness_score", 0) or 0),
             },
         })
 
@@ -369,6 +490,8 @@ def opportunity_scan(
         "- negotiation/listing_opportunity: stronger owner approach or price conversation angle\n"
         "- upgrade_potential: under-marketed value-add angle\n"
         "- move_in_ready/premium_justification: may explain a high price, so do not call something overpriced unless the premium still looks weakly justified\n\n"
+        "- agent_strength: high rating/reviews/SuperAgent/deals means the incumbent agent is harder to displace; prefer co-broke/research-first unless the listing is very stale or clearly mispriced\n"
+        "- agent_weakness: low/no rating, few reviews or weak visible profile makes a relaunch/direct-owner angle stronger\n\n"
         "For each opportunity you select, provide:\n"
         "- opportunity_type: one of stale_overpriced | stale_listing | overpriced | weak_listing | motivated_seller\n"
         "- opportunity_score: 1-10 (10 = best opportunity)\n"

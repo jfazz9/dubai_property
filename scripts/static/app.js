@@ -1151,6 +1151,26 @@
           return `<span class="opp-pill">${priceStr}</span>`;
         }
 
+        function agentPills(opp) {
+          const pills = [];
+          if (opp.agent_is_superagent || /superagent/i.test(opp.agent_badge || "")) {
+            pills.push(`<span class="opp-pill agent-strong">SuperAgent</span>`);
+          }
+          if (opp.agent_rating) {
+            const reviews = opp.agent_review_count != null ? ` &middot; ${opp.agent_review_count} ratings` : "";
+            pills.push(`<span class="opp-pill agent-rating">${Number(opp.agent_rating).toFixed(1)} star${reviews}</span>`);
+          } else {
+            pills.push(`<span class="opp-pill agent-weak">No visible rating</span>`);
+          }
+          if (opp.agent_closed_deals != null) {
+            pills.push(`<span class="opp-pill">${opp.agent_closed_deals} closed deals</span>`);
+          }
+          if (opp.agent_response_time) {
+            pills.push(`<span class="opp-pill">${escapeHtml(opp.agent_response_time)} response</span>`);
+          }
+          return pills.join("");
+        }
+
         const cards = opps.map(opp => {
           const score = opp.opportunity_score || 0;
           const typeLabel = typeLabels[opp.opportunity_type] || (opp.opportunity_type || "Opportunity").replace(/_/g, " ");
@@ -1169,6 +1189,7 @@
       ${stalePill(opp.days_on_market)}
       ${pricePill(opp.price_vs_median_pct, opp.price, opp.price_currency)}
       ${statsLine ? `<span class="opp-pill">${escapeHtml(statsLine)}</span>` : ""}
+      ${agentPills(opp)}
     </div>
     <div class="opp-reason">${escapeHtml(opp.reason || "")}</div>
     <div class="opp-approach">→ ${escapeHtml(opp.approach || "")}</div>

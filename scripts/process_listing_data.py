@@ -7,9 +7,11 @@ import pandas as pd
 
 from extract_listing_details import (
     calculate_listed_date,
+    clean_decimal,
     clean_number,
     extract_agency_from_description,
     extract_agent_and_agency,
+    extract_agent_profile,
     extract_baths_from_body,
     extract_beds_from_body,
     extract_bua_from_description,
@@ -60,6 +62,15 @@ PROCESSED_COLUMNS = [
     "bua_from_description",
     "plot_from_description",
     "agent_name",
+    "agent_profile_url",
+    "agent_rating",
+    "agent_review_count",
+    "agent_badge",
+    "agent_is_superagent",
+    "agent_properties_count",
+    "agent_closed_deals",
+    "agent_response_time",
+    "agent_total_value",
     "agency_name",
     "listed_age",
     "listed_date",
@@ -94,6 +105,18 @@ def clean_optional_text(value):
 
     value = str(value).strip()
     return value or None
+
+
+def clean_bool(value):
+    if value is None or pd.isna(value):
+        return None
+
+    normalized = str(value).strip().lower()
+    if normalized in {"true", "1", "yes"}:
+        return True
+    if normalized in {"false", "0", "no"}:
+        return False
+    return None
 
 
 def calculate_price_per_sqft(price, size):
@@ -191,7 +214,19 @@ def process_raw_row(row, purpose="sale", target_area="Arabian Ranches 2"):
     description = extract_description(body)
     description_json = build_description_json(description)
     agent_name, agency_name = extract_agent_and_agency(body)
+    agent_profile = extract_agent_profile(body)
     agent_name = clean_optional_text(row.get("agent_name_dom")) or agent_name
+    agent_profile_url = clean_optional_text(row.get("agent_profile_url_dom"))
+    agent_rating = clean_decimal(row.get("agent_rating_dom")) or agent_profile.get("agent_rating")
+    agent_review_count = clean_number(row.get("agent_review_count_dom")) or agent_profile.get("agent_review_count")
+    agent_is_superagent = clean_bool(row.get("agent_is_superagent_dom"))
+    if agent_is_superagent is None:
+        agent_is_superagent = agent_profile.get("agent_is_superagent")
+    agent_badge = "SuperAgent" if agent_is_superagent else agent_profile.get("agent_badge")
+    agent_properties_count = clean_number(row.get("agent_properties_count_dom")) or agent_profile.get("agent_properties_count")
+    agent_closed_deals = clean_number(row.get("agent_closed_deals_dom")) or agent_profile.get("agent_closed_deals")
+    agent_response_time = clean_optional_text(row.get("agent_response_time_dom")) or agent_profile.get("agent_response_time")
+    agent_total_value = clean_optional_text(row.get("agent_total_value_dom")) or agent_profile.get("agent_total_value")
     agency_name = clean_optional_text(row.get("agency_name_dom")) or agency_name
     agency_name = agency_name or extract_agency_from_description(description)
 
@@ -220,6 +255,15 @@ def process_raw_row(row, purpose="sale", target_area="Arabian Ranches 2"):
         "bua_from_description": extract_bua_from_description(body),
         "plot_from_description": plot_from_description,
         "agent_name": agent_name,
+        "agent_profile_url": agent_profile_url,
+        "agent_rating": agent_rating,
+        "agent_review_count": clean_number(agent_review_count),
+        "agent_badge": agent_badge,
+        "agent_is_superagent": agent_is_superagent,
+        "agent_properties_count": clean_number(agent_properties_count),
+        "agent_closed_deals": clean_number(agent_closed_deals),
+        "agent_response_time": agent_response_time,
+        "agent_total_value": agent_total_value,
         "agency_name": agency_name,
         "listed_age": listed_age,
         "listed_date": listed_date,

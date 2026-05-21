@@ -61,6 +61,22 @@ def clean_number(value):
     return int(numbers[0])
 
 
+def clean_decimal(value):
+    if value is None:
+        return None
+
+    match = re.search(r"\d+(?:\.\d+)?", str(value).replace(",", ""))
+    return float(match.group(0)) if match else None
+
+
+def clean_count(value):
+    if value is None:
+        return None
+
+    match = re.search(r"[\d,]+", str(value))
+    return int(match.group(0).replace(",", "")) if match else None
+
+
 def safe_get_text(driver, selector):
     try:
         return driver.find_element(By.CSS_SELECTOR, selector).text.strip()
@@ -101,6 +117,35 @@ def get_dom_snapshot(driver):
                 return element ? element.getAttribute(name) : null;
             };
 
+            const absoluteUrl = (url) => {
+                if (!url) return null;
+                try {
+                    return new URL(url, window.location.origin).href;
+                } catch {
+                    return url;
+                }
+            };
+
+            const textByLabel = (labelText) => {
+                const wanted = labelText.toLowerCase();
+                const spans = Array.from(document.querySelectorAll('span, p, div'));
+                const label = spans.find((element) => (element.innerText || '').trim().toLowerCase() === wanted);
+                if (!label || !label.parentElement) return null;
+                const values = Array.from(label.parentElement.querySelectorAll('span, p, div'))
+                    .map((element) => (element.innerText || '').trim())
+                    .filter(Boolean)
+                    .filter((value) => value.toLowerCase() !== wanted);
+                return values[0] || null;
+            };
+
+            const ratingsButton = document.querySelector('[data-testid="agent-ratings-button"]');
+            const ratingContainer = ratingsButton ? ratingsButton.closest('div') : null;
+            const agentRating = ratingContainer
+                ? Array.from(ratingContainer.querySelectorAll('p, span'))
+                    .map((element) => (element.innerText || '').trim())
+                    .find((value) => /^[1-5](?:\\.\\d)?$/.test(value))
+                : null;
+
             const regulatoryValue = (testId) => {
                 const label = document.querySelector(`[data-testid="${testId}"]`);
                 if (!label) return null;
@@ -116,6 +161,14 @@ def get_dom_snapshot(driver):
                 size_sqm_title: attr('[data-testid="property-attributes-size"] span', 'title'),
                 price_per_area_text: text('[data-testid="property-attributes-price-per-area"]'),
                 agent_name: text('[data-testid="property-detail-agent-name"]'),
+                agent_profile_url: absoluteUrl(attr('[data-testid="agent-link-with-name"]', 'href') || attr('[data-testid="agent-link-with-image"]', 'href')),
+                agent_rating: agentRating,
+                agent_review_count: ratingsButton ? ratingsButton.innerText.trim() : null,
+                agent_is_superagent: Boolean(document.querySelector('[data-testid="avatar-super-agent-icon"]')),
+                agent_properties_count: text('[data-testid="link--secondary"]'),
+                agent_closed_deals: textByLabel('Closed Deals'),
+                agent_response_time: textByLabel('Response time'),
+                agent_total_value: textByLabel('Total value'),
                 agency_name: regulatoryValue('regulatory_authority_name'),
                 listed_age: regulatoryValue('regulatory_listed'),
                 reference: regulatoryValue('regulatory_reference')
@@ -229,6 +282,117 @@ def extract_agent_and_agency(text):
             return agent_name, agency_name
 
     return None, None
+
+
+def extract_agent_profile(text):
+    lines = visible_lines(text)
+    profile_lines = []
+
+    for index, line in enumerate(lines):
+        if line.lower() != "call":
+            continue
+
+        start = max(0, index - 10)
+        end = min(len(lines), index + 12)
+        profile_lines = lines[start:end]
+        break
+
+    if not profile_lines:
+        profile_lines = lines
+
+    profile_text = "\n".join(profile_lines)
+    lower_profile = profile_text.lower()
+    rating = None
+    review_count = None
+    properties_count = None
+    closed_deals = None
+    response_time = None
+    total_value = None
+    badges = []
+
+    for line in profile_lines:
+        clean_line = line.strip()
+
+        if rating is None and re.match(r"^[1-5](?:\.\d)?$", clean_line):
+            rating = clean_decimal(clean_line)
+
+        if review_count is None:
+            count_match = re.search(r"([\d,]+)\s+(?:rating|ratings|review|reviews)\b", clean_line, re.IGNORECASE)
+
+            if count_match:
+                review_count = clean_count(count_match.group(1))
+
+        if properties_count is None:
+            properties_match = re.search(r"see\s+agent\s+properties\s*\(([\d,]+)\)", clean_line, re.IGNORECASE)
+            if properties_match:
+                properties_count = clean_count(properties_match.group(1))
+
+        if closed_deals is None:
+            deals_match = re.search(r"([\d,]+)\s+closed\s+deals?", clean_line, re.IGNORECASE)
+            if deals_match:
+                closed_deals = clean_count(deals_match.group(1))
+
+        if response_time is None:
+            response_match = re.search(r"((?:\d+\s*)?(?:mins?|hours?|days?))\s+response\s+time", clean_line, re.IGNORECASE)
+            if response_match:
+                response_time = response_match.group(1).strip()
+
+        if total_value is None:
+            total_value_match = re.search(r"([A-Z]*\s*[\d,.]+\s*[KMB]?)\s+total\s+value", clean_line, re.IGNORECASE)
+            if total_value_match:
+                total_value = total_value_match.group(1).strip()
+
+        if re.search(r"\bsuper\s*agent\b|\bsuperagent\b", clean_line, re.IGNORECASE):
+            badges.append("SuperAgent")
+
+        if re.search(r"\bverified\b", clean_line, re.IGNORECASE):
+            badges.append("Verified")
+
+    if review_count is None and "no ratings" in lower_profile:
+        review_count = 0
+
+    return {
+        "agent_rating": rating,
+        "agent_review_count": review_count,
+        "agent_badge": ", ".join(dict.fromkeys(badges)) or None,
+        "agent_is_superagent": "SuperAgent" in badges or None,
+        "agent_properties_count": properties_count,
+        "agent_closed_deals": closed_deals,
+        "agent_response_time": response_time,
+        "agent_total_value": total_value,
+    }
+
+
+def extract_agency_profile(text):
+    rating = None
+    review_count = None
+    patterns = [
+        r"([\d,]+)\s+(?:happy\s+)?clients?.{0,80}?(\d+(?:\.\d+)?)\s*(?:/5|star|client rating)",
+        r"(\d+(?:\.\d+)?)\s*(?:/5|star|client rating).{0,80}?([\d,]+)\s+(?:happy\s+)?clients?",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, str(text or ""), re.IGNORECASE | re.DOTALL)
+
+        if not match:
+            continue
+
+        first = match.group(1)
+        second = match.group(2)
+
+        if "." in first:
+            rating = clean_decimal(first)
+            review_count = clean_count(second)
+        else:
+            review_count = clean_count(first)
+            rating = clean_decimal(second)
+
+        break
+
+    return {
+        "agency_rating": rating,
+        "agency_review_count": review_count,
+    }
 
 
 def extract_agency_from_description(description):
