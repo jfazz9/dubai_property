@@ -22,6 +22,7 @@
     const estimateButton    = document.querySelector("#ai-estimate");
     const estimatePanel     = document.querySelector("#estimate-panel");
     const oppScanButton     = document.querySelector("#opp-scan");
+    const oppPurposeFilter  = document.querySelector("#opp-purpose-filter");
     const opportunityPanel  = document.querySelector("#opportunity-panel");
     const aiReportButton = document.querySelector("#ai-report");
     const clientReportButton = document.querySelector("#client-report");
@@ -1093,6 +1094,7 @@
 
     async function runOpportunityScan() {
       const token = activeApiKey || tokenBox.value.trim();
+      const scanPurpose = oppPurposeFilter?.value || "both";
       if (!token) { error.hidden = false; error.textContent = "Add and check an OpenAI API key first (AI key button above)."; return; }
       oppScanButton.disabled = true;
       oppScanButton.textContent = "Scanning…";
@@ -1106,7 +1108,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             api_key: token,
-            purpose_filter: "both",
+            purpose_filter: scanPurpose,
             limit: 15,
           }),
         });
@@ -1178,8 +1180,9 @@
   </div>`;
         }).join("");
 
+        const purposeLabel = scanPurpose === "sale" ? "Sales" : scanPurpose === "rent" ? "Rentals" : "All";
         opportunityPanel.innerHTML = `
-  <h2>Opportunity Scan <span style="font-size:12px;font-weight:400;color:#c0411a;">${opps.length} leads identified</span></h2>
+  <h2>Opportunity Scan <span style="font-size:12px;font-weight:400;color:#c0411a;">${purposeLabel} · ${opps.length} leads identified</span></h2>
   <p class="opp-scan-note">Scanned ${scannedCount} active listings · ${candidateCount} candidates analysed${scanNote ? " · " + escapeHtml(scanNote) : ""}</p>
   <div class="opp-grid">${cards || "<p style='color:var(--muted);font-size:13px;'>No strong opportunities found — try running a fresh scrape to update listing data.</p>"}</div>`;
       } catch (err) {

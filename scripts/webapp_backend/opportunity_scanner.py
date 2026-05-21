@@ -15,6 +15,10 @@ import sys
 
 import pandas as pd
 
+from enquiry_matcher import combined_listing_text
+from enquiry_matcher import phrase_in_text
+from enquiry_matcher import soft_intent_points
+
 from .data_loader import read_master
 
 
@@ -55,6 +59,49 @@ def _parse_listed_age_days(text: str):
     return None
 
 
+PREMIUM_JUSTIFICATION_CLUES = {
+    "fully upgraded": 4,
+    "upgraded": 3,
+    "renovated": 3,
+    "fully renovated": 4,
+    "turnkey": 3,
+    "fully furnished": 3,
+    "furnished": 2,
+    "private pool": 4,
+    "swimming pool": 3,
+    "corner plot": 3,
+    "single row": 2,
+    "huge plot": 3,
+    "large plot": 2,
+    "big plot": 2,
+    "extended": 2,
+    "rare": 2,
+    "one of a kind": 3,
+    "luxury": 2,
+}
+
+
+def _intent_signal(row: dict, intent_name: str) -> int:
+    enquiry = {
+        "search_intent": intent_name,
+        "raw_prompt": "",
+        "must_haves": [],
+    }
+    score, _ = soft_intent_points(pd.Series(row), enquiry)
+    return int(score)
+
+
+def _premium_justification_score(row: dict) -> int:
+    haystack = combined_listing_text(pd.Series(row))
+    score = 0
+
+    for clue, points in PREMIUM_JUSTIFICATION_CLUES.items():
+        if phrase_in_text(clue, haystack):
+            score += points
+
+    return min(score, 10)
+
+
 def _rule_score(row: dict, community_medians: dict, purpose: str) -> int:
     """Compute a simple rule-based opportunity score (higher = better candidate)."""
     score = 0
@@ -71,18 +118,20 @@ def _rule_score(row: dict, community_medians: dict, purpose: str) -> int:
         elif days >= 14:
             score += 1
 
-    # Overpriced vs community median
+    # Overpriced vs community median. Premium/rare features reduce the signal
+    # because a high asking price may be justified by condition, plot, pool, etc.
     price_col = "annual_rent" if purpose == "rent" else "price"
     community = str(row.get("predicted_community") or "")
     price = row.get(price_col)
+    premium_justification = int(row.get("_premium_justification_score") or 0)
     if community and price and community in community_medians:
         median = community_medians.get(community)
         if median and median > 0:
             ratio = price / median
             if ratio > 1.15:
-                score += 3
+                score += 1 if premium_justification >= 6 else 3
             elif ratio > 1.05:
-                score += 1
+                score += 0 if premium_justification >= 6 else 1
 
     # Description quality (shorter → weaker listing presentation)
     desc_len = len(str(row.get("description") or ""))
@@ -90,6 +139,19 @@ def _rule_score(row: dict, community_medians: dict, purpose: str) -> int:
         score += 2
     elif desc_len < 1200:
         score += 1
+
+    # Reuse the same soft-intent intelligence as the client brief workflow.
+    # These are deliberately modest rule boosts; AI still makes the final call.
+    negotiation_signal = max(int(row.get("_negotiation_signal") or 0), 0)
+    listing_signal = max(int(row.get("_listing_opportunity_signal") or 0), 0)
+    upgrade_signal = max(int(row.get("_upgrade_potential_signal") or 0), 0)
+
+    score += min(3, negotiation_signal // 8)
+    score += min(3, listing_signal // 8)
+    score += min(2, upgrade_signal // 12)
+
+    if premium_justification >= 6:
+        score -= 1
 
     return score
 
@@ -193,6 +255,20 @@ def opportunity_scan(
     # --- Community price medians (per purpose — MUST NOT mix sale/rent prices) --
     # Keyed as {purpose: {community: median_price}} so sale prices are never
     # compared against rent medians (which would produce absurd % differences).
+    # Scenario-style signals reused from the main matcher. These keep the broad
+    # daily radar simple in the UI while making the backend more agent-aware.
+    signal_rows = []
+    for _, row in master_df.iterrows():
+        row_data = row.to_dict()
+        row_data["_negotiation_signal"] = _intent_signal(row_data, "negotiation")
+        row_data["_listing_opportunity_signal"] = _intent_signal(row_data, "listing_opportunity")
+        row_data["_upgrade_potential_signal"] = _intent_signal(row_data, "upgrade_potential")
+        row_data["_move_in_ready_signal"] = _intent_signal(row_data, "move_in_ready")
+        row_data["_premium_justification_score"] = _premium_justification_score(row_data)
+        signal_rows.append(row_data)
+
+    master_df = pd.DataFrame(signal_rows)
+
     community_medians: dict = {"sale": {}, "rent": {}}
     for purpose in purposes_to_load:
         price_col = "annual_rent" if purpose == "rent" else "price"
@@ -261,6 +337,13 @@ def opportunity_scan(
             "description_length": len(str(row.get("description") or "")),
             "description_snippet": str(row.get("description") or "")[:350],
             "rule_score": int(row.get("_opp_score", 0)),
+            "signals": {
+                "negotiation": int(row.get("_negotiation_signal", 0) or 0),
+                "listing_opportunity": int(row.get("_listing_opportunity_signal", 0) or 0),
+                "upgrade_potential": int(row.get("_upgrade_potential_signal", 0) or 0),
+                "move_in_ready": int(row.get("_move_in_ready_signal", 0) or 0),
+                "premium_justification": int(row.get("_premium_justification_score", 0) or 0),
+            },
         })
 
     if not candidate_rows:
@@ -282,6 +365,10 @@ def opportunity_scan(
         "- Overpriced vs community median → owner needs a price-reality conversation\n"
         "- Weak, generic, or very short listing description → agent is not actively marketing it\n"
         "- Both stale AND overpriced → highest-priority opportunity\n\n"
+        "Use the supplied signals too:\n"
+        "- negotiation/listing_opportunity: stronger owner approach or price conversation angle\n"
+        "- upgrade_potential: under-marketed value-add angle\n"
+        "- move_in_ready/premium_justification: may explain a high price, so do not call something overpriced unless the premium still looks weakly justified\n\n"
         "For each opportunity you select, provide:\n"
         "- opportunity_type: one of stale_overpriced | stale_listing | overpriced | weak_listing | motivated_seller\n"
         "- opportunity_score: 1-10 (10 = best opportunity)\n"

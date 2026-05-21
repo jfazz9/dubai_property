@@ -346,6 +346,17 @@
     .chip.estimate:hover { background: #f5f0ff; }
     .chip.opportunity { border-color: #c0411a; color: #c0411a; }
     .chip.opportunity:hover { background: #fff4f0; }
+    .opp-purpose-select {
+      min-height: 26px;
+      border: 1px solid #e3aa95;
+      border-radius: 999px;
+      padding: 0 8px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b2d12;
+      background: #fff;
+    }
     /* Vertical divider between scenarios and report actions */
     .ai-divider {
       width: 1px;
