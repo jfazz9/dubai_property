@@ -178,6 +178,79 @@ CLIENT_REPORT_SCHEMA = {
 }
 
 
+AGENT_PLAN_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "title": {"type": "string"},
+        "scenario": {"type": "string"},
+        "agent_summary": {"type": "string"},
+        "priority_actions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "priority": {"type": "integer"},
+                    "listing": {"type": "string"},
+                    "decision": {"type": "string"},
+                    "why": {"type": "string"},
+                    "recommended_action": {"type": "string"},
+                    "conversation_angle": {"type": "string"},
+                    "call_opener": {"type": "string"},
+                    "verification_questions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    },
+                    "buyer_message": {"type": "string"},
+                    "owner_lookup_recommended": {"type": "boolean"},
+                    "risk_level": {"type": "string"},
+                },
+                "required": [
+                    "priority",
+                    "listing",
+                    "decision",
+                    "why",
+                    "recommended_action",
+                    "conversation_angle",
+                    "call_opener",
+                    "verification_questions",
+                    "buyer_message",
+                    "owner_lookup_recommended",
+                    "risk_level",
+                ],
+            },
+        },
+        "scenario_checklist": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "decision_logic": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "immediate_next_steps": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "warnings": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+    },
+    "required": [
+        "title",
+        "scenario",
+        "agent_summary",
+        "priority_actions",
+        "scenario_checklist",
+        "decision_logic",
+        "immediate_next_steps",
+        "warnings",
+    ],
+}
+
+
 def _read_master(purpose):
     """Look up read_master through the package namespace so monkeypatching works."""
     pkg = sys.modules.get("webapp_backend") or sys.modules.get("scripts.webapp_backend")
@@ -489,6 +562,212 @@ def _client_report_rows(matches_df):
         })
 
     return client_rows
+
+
+def _agent_plan_rows(matches_df):
+    rows = []
+
+    for index, (_, row) in enumerate(matches_df.iterrows(), start=1):
+        row_payload = row_to_ai_payload(row, description_chars=5000)
+        rows.append({
+            "candidate_ref": f"listing_{index}",
+            "url": row_payload.get("url"),
+            "title": row_payload.get("title"),
+            "community": row_payload.get("predicted_community") or row_payload.get("community"),
+            "property_category": row_payload.get("property_category") or row_payload.get("category"),
+            "predicted_type": row_payload.get("predicted_type"),
+            "bedrooms": row_payload.get("bedrooms"),
+            "bathrooms": row_payload.get("bathrooms"),
+            "price": row_payload.get("price") or row_payload.get("annual_rent"),
+            "property_size_sqft": row_payload.get("property_size_sqft"),
+            "plot_size_sqft": row_payload.get("plot_size_sqft"),
+            "price_per_sqft": row_payload.get("price_per_sqft"),
+            "listed_age": row_payload.get("listed_age"),
+            "match_score": row_payload.get("match_score"),
+            "match_reasons": row_payload.get("match_reasons"),
+            "outdoor_matches": row_payload.get("outdoor_matches"),
+            "ai_score": row_payload.get("ai_score"),
+            "ai_fit_summary": row_payload.get("ai_fit_summary"),
+            "ai_opportunity_angle": row_payload.get("ai_opportunity_angle"),
+            "ai_strengths": row_payload.get("ai_strengths"),
+            "ai_concerns": row_payload.get("ai_concerns"),
+            "ai_verify": row_payload.get("ai_verify"),
+            "description": row_payload.get("description"),
+            "description_json": row_payload.get("description_json"),
+        })
+
+    return rows
+
+
+def ai_agent_plan_prompt(
+    text,
+    scenario="best_value",
+    ranked_urls=None,
+    selected_purpose="auto",
+    api_key=None,
+    limit=6,
+    listing_scope="auto",
+    listing_communities=None,
+    market_scope="auto",
+    market_communities=None,
+):
+    if not api_key:
+        raise RuntimeError("Missing OpenAI API key.")
+
+    scenario_config = SCENARIOS.get(scenario) or SCENARIOS.get("best_value")
+    scenario_intent = scenario if scenario in {"best_value", "negotiation", "listing_opportunity", "upgrade_potential", "move_in_ready"} else "auto"
+    enquiry = parse_prompt(text, selected_purpose, scenario_intent, market_scope, market_communities, listing_scope, listing_communities)
+    enquiry["analysis_focus"] = scenario_config["focus"]
+
+    matches_df, master_df, path = build_matches_dataframe(dict(enquiry), max(limit, DEFAULT_AI_SHORTLIST_LIMIT))
+
+    if matches_df.empty:
+        raise RuntimeError("No suitable rows were found for this agent plan.")
+
+    if ranked_urls:
+        order = {url: index for index, url in enumerate(ranked_urls)}
+        ranked_df = matches_df[matches_df["url"].isin(order)].copy()
+
+        if ranked_df.empty:
+            raise RuntimeError("The previous built report shortlist is no longer available. Run Build Report again.")
+
+        ranked_df["_ranked_order"] = ranked_df["url"].map(order)
+        matches_df = ranked_df.sort_values("_ranked_order").drop(columns=["_ranked_order"])
+
+    matches_df = matches_df.head(max(1, min(int(limit or 6), 8)))
+    market_context = build_market_context(enquiry, matches_df)
+    payload = {
+        "client_brief": enquiry,
+        "scenario": scenario,
+        "scenario_title": scenario_config["report_title"],
+        "market_context": market_context,
+        "candidate_rows": _agent_plan_rows(matches_df),
+        "allowed_decisions": [
+            "Pursue now",
+            "Call to verify",
+            "Book viewing",
+            "Send to client",
+            "Use as negotiation comp",
+            "Backup only",
+            "Reject",
+            "Watch for price drop",
+            "Owner lookup",
+            "Possible duplicate - verify first",
+        ],
+        "scenario_checklist_rules": {
+            "move_in_ready": [
+                "vacancy / VOT",
+                "handover date",
+                "AC service",
+                "MEP condition",
+                "appliance inclusion",
+                "pool service if relevant",
+                "garden irrigation",
+                "renovation invoices",
+                "current photos",
+                "title deed BUA",
+            ],
+            "best_value": [
+                "official BUA/plot",
+                "asking price history",
+                "seller motivation",
+                "tenancy details",
+                "recent comps",
+                "days on market",
+                "duplicate listings",
+                "lowest acceptable price indication",
+                "vacancy discount",
+                "service charges",
+            ],
+            "negotiation": [
+                "seller motivation",
+                "offers already received",
+                "listing age and price movement",
+                "vacancy or tenancy leverage",
+                "official BUA/plot",
+                "recent closest comps",
+                "seller timeline",
+                "mortgage or transfer constraints",
+                "lowest acceptable price indication",
+            ],
+            "upgrade_potential": [
+                "official BUA and plot",
+                "site plan and setbacks",
+                "developer / HOA approval route",
+                "existing extension approvals",
+                "MEP capacity",
+                "pool / landscaping feasibility",
+                "condition survey",
+                "vacancy timing for works",
+            ],
+            "listing_opportunity": [
+                "seller contact route",
+                "current mandate / exclusivity",
+                "days on market",
+                "price history",
+                "agent relationship strength",
+                "owner motivation",
+                "marketing gaps",
+                "duplicate listings",
+                "co-broke viability",
+            ],
+            "budget_reality": [
+                "minimum realistic market price",
+                "product compromise",
+                "community compromise",
+                "size and condition trade-off",
+                "recent comps",
+                "over-budget alternatives",
+                "fallback options",
+            ],
+            "fallback": [
+                "premium compromise options",
+                "lower-cost fallback options",
+                "client non-negotiables",
+                "viewing priority",
+                "availability",
+                "condition gap",
+                "budget stretch required",
+            ],
+        },
+    }
+
+    client = client_for_api_key(api_key)
+    response = client.responses.create(
+        model="gpt-5-mini",
+        instructions=(
+            "You are an experienced Dubai estate-agent sales manager. Convert the already ranked property shortlist "
+            "into an action plan for the agent. Be practical, decisive and specific. Return JSON only. "
+            "Rank by action priority, not by prettiest property. Each listing must have one clear recommended action, "
+            "a call angle, a call opener, verification questions, and a buyer-facing message the agent can send after checks. "
+            "Use scenario-specific checklist logic. Avoid vague wording; the point is to stop the agent wondering what to do next."
+        ),
+        input=json.dumps(payload, ensure_ascii=False),
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "agent_plan_of_action",
+                "strict": True,
+                "schema": AGENT_PLAN_SCHEMA,
+            }
+        },
+        max_output_tokens=6000,
+    )
+
+    return {
+        "agent_plan": json.loads(response.output_text),
+        "enquiry": enquiry,
+        "source_path": str(path),
+        "candidate_count": int(len(matches_df)),
+        "report_context": {
+            "scenario": scenario,
+            "ranked_urls": [
+                url
+                for url in matches_df["url"].head(limit).tolist()
+                if url
+            ],
+        },
+    }
 
 
 def ai_client_report_prompt(

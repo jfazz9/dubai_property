@@ -26,17 +26,25 @@ REQUEST_HEADERS = {
 HUMAN_VERIFICATION_MARKERS = [
     "human verification",
     "verify you are human",
-    "captcha",
     "cf-challenge",
     "access denied",
 ]
 INACTIVE_TEXT_MARKERS = [
     "property is no longer available",
+    "sorry, this villa for sale",
+    "sorry, this villa for rent",
+    "sorry, this apartment for sale",
+    "sorry, this apartment for rent",
+    "is no longer available",
     "listing is no longer available",
     "page not found",
     "property not found",
     "we can't find the page",
     "this property has been removed",
+    "however we have hundreds of similar properties for you",
+    "view similar properties",
+    "property-gone-image",
+    "property gone",
 ]
 SEARCH_PAGE_MARKERS = [
     "properties-for-sale",
@@ -90,6 +98,51 @@ def looks_like_search_page(url):
     return any(marker in normalized for marker in SEARCH_PAGE_MARKERS)
 
 
+def browser_render_snapshot(driver):
+    try:
+        return driver.execute_script(
+            """
+            return {
+                text: document.body ? document.body.innerText : "",
+                html: document.documentElement ? document.documentElement.outerHTML : "",
+                hasPrice: Boolean(document.querySelector('[data-testid="property-price-value"]')),
+                hasAttributes: Boolean(document.querySelector('[data-testid="property-attributes-bedrooms"], [data-testid="property-attributes-size"]')),
+                hasRegulatory: Boolean(document.querySelector('[data-testid="regulatory_reference"], [data-testid="regulatory_listed"]')),
+                hasGoneCard: Boolean(document.querySelector('img[src*="property-gone-image"], a[href*="/en/search?"]'))
+            };
+            """
+        ) or {}
+    except Exception:
+        return {}
+
+
+def wait_for_rendered_state(driver, seconds=12):
+    deadline = time.time() + max(0, seconds)
+    last_snapshot = {}
+
+    while True:
+        snapshot = browser_render_snapshot(driver)
+        last_snapshot = snapshot
+        body_text = snapshot.get("text") or ""
+        text = f"{body_text}\n{snapshot.get('html') or ''}"
+
+        if looks_inactive_from_text(text) or snapshot.get("hasGoneCard"):
+            return "inactive", snapshot
+
+        if snapshot.get("hasPrice") and (snapshot.get("hasAttributes") or snapshot.get("hasRegulatory")):
+            return "active", snapshot
+
+        if looks_like_human_verification(body_text):
+            return "human_verification", snapshot
+
+        if time.time() >= deadline:
+            break
+
+        time.sleep(1)
+
+    return "unknown", last_snapshot
+
+
 def classify_response(original_url, response):
     final_url = response.url or original_url
     text = response.text or ""
@@ -107,6 +160,9 @@ def classify_response(original_url, response):
 
     if status_code >= 400:
         return ActiveCheckResult(True, "unknown_http_status", f"HTTP {status_code}")
+
+    if status_code == 202 and not text.strip():
+        return ActiveCheckResult(True, "unknown_empty_202", "HTTP 202 with empty body; likely client-rendered page")
 
     if looks_inactive_from_text(text):
         return ActiveCheckResult(False, "inactive_not_found_text", "page text says listing is unavailable")
@@ -145,6 +201,57 @@ def check_url(url, timeout=15):
         return ActiveCheckResult(True, "unknown_request_error", str(exc))
 
     return classify_response(url, response)
+
+
+def browser_check_url(driver, url, human_verification_wait=0, render_wait=12, debug_dir=None):
+    try:
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support.ui import WebDriverWait
+
+        driver.get(url)
+        WebDriverWait(driver, 20).until(lambda current_driver: current_driver.find_element(By.TAG_NAME, "body"))
+        final_url = driver.current_url or url
+        state, snapshot = wait_for_rendered_state(driver, seconds=render_wait)
+
+        if human_verification_wait and state == "human_verification":
+            print(f"Human Verification detected. You have {human_verification_wait} seconds to complete it in Chrome...")
+            time.sleep(human_verification_wait)
+            final_url = driver.current_url or url
+            state, snapshot = wait_for_rendered_state(driver, seconds=render_wait)
+    except Exception as exc:
+        return ActiveCheckResult(True, "unknown_browser_error", str(exc))
+
+    text = f"{snapshot.get('text') or ''}\n{snapshot.get('html') or ''}"
+
+    if debug_dir:
+        path = Path(debug_dir)
+        path.mkdir(parents=True, exist_ok=True)
+        listing_id = extract_listing_id(url) or re.sub(r"\W+", "_", url)[-60:]
+        (path / f"{listing_id}_body.txt").write_text(snapshot.get("text") or "", encoding="utf-8")
+        (path / f"{listing_id}_source.html").write_text(snapshot.get("html") or "", encoding="utf-8")
+        (path / f"{listing_id}_meta.txt").write_text(
+            f"state={state}\nfinal_url={final_url}\nkeys={sorted(snapshot.keys())}\n",
+            encoding="utf-8",
+        )
+
+    if state == "human_verification" or looks_like_human_verification(text):
+        return ActiveCheckResult(True, "unknown_human_verification", "human verification or bot challenge page")
+
+    if state == "inactive" or looks_inactive_from_text(text):
+        return ActiveCheckResult(False, "inactive_not_found_text", "rendered page says listing is unavailable")
+
+    if looks_like_search_page(final_url):
+        return ActiveCheckResult(False, "inactive_redirected_to_search", f"browser redirected to search page: {final_url}")
+
+    original_id = extract_listing_id(url)
+    final_id = extract_listing_id(final_url)
+    if original_id and final_id and original_id != final_id:
+        return ActiveCheckResult(False, "inactive_redirected_to_similar", f"browser redirected from ID {original_id} to {final_id}")
+
+    if state == "active":
+        return ActiveCheckResult(True, "active", "rendered listing page returned successfully")
+
+    return ActiveCheckResult(True, "unknown_browser_unclear_page", f"browser could not find active or inactive rendered markers at {final_url}")
 
 
 def ensure_check_columns(master_df):
@@ -204,6 +311,34 @@ def run_active_checks(master_df, checker=check_url, limit=None, delay=0.0, check
     return master_df, pd.DataFrame(results)
 
 
+def run_active_checks_with_browser_fallback(master_df, limit=None, delay=0.0, checked_at=None, timeout=15, human_verification_wait=0, render_wait=12, debug_dir=None):
+    try:
+        from extract_listing_details import create_driver
+    except ImportError as exc:
+        raise RuntimeError("Browser fallback requires Selenium scraper dependencies.") from exc
+
+    driver = create_driver()
+
+    try:
+        def checker(url):
+            result = check_url(url, timeout=timeout)
+
+            if result.status.startswith("unknown_"):
+                return browser_check_url(
+                    driver,
+                    url,
+                    human_verification_wait=human_verification_wait,
+                    render_wait=render_wait,
+                    debug_dir=debug_dir,
+                )
+
+            return result
+
+        return run_active_checks(master_df, checker=checker, limit=limit, delay=delay, checked_at=checked_at)
+    finally:
+        driver.quit()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Check active listing URLs and update master active status conservatively.")
     parser.add_argument("--purpose", choices=["sale", "rent"], help="Listing purpose. If omitted, you will be prompted.")
@@ -212,6 +347,10 @@ def main():
     parser.add_argument("--limit", type=int, help="Only check the first N active listings.")
     parser.add_argument("--delay", type=float, default=0.5, help="Seconds to wait between URL checks.")
     parser.add_argument("--timeout", type=int, default=15, help="Request timeout in seconds.")
+    parser.add_argument("--deep-unclear", action="store_true", help="Use a browser/Selenium fallback only for unclear lightweight checks.")
+    parser.add_argument("--verification-wait", type=int, default=0, help="Seconds to wait for manual Human Verification during browser fallback.")
+    parser.add_argument("--render-wait", type=int, default=12, help="Seconds to wait for rendered listing/gone markers during browser fallback.")
+    parser.add_argument("--debug-dir", help="Directory to save rendered browser body/source snapshots for unclear pages.")
     parser.add_argument("--dry-run", action="store_true", help="Check URLs and print a summary without writing the master file.")
     args = parser.parse_args()
 
@@ -224,15 +363,26 @@ def main():
 
     master_df = pd.read_csv(input_file)
 
-    def checker(url):
-        return check_url(url, timeout=args.timeout)
+    if args.deep_unclear:
+        updated_df, results_df = run_active_checks_with_browser_fallback(
+            master_df,
+            limit=args.limit,
+            delay=args.delay,
+            timeout=args.timeout,
+            human_verification_wait=args.verification_wait,
+            render_wait=args.render_wait,
+            debug_dir=args.debug_dir,
+        )
+    else:
+        def checker(url):
+            return check_url(url, timeout=args.timeout)
 
-    updated_df, results_df = run_active_checks(
-        master_df,
-        checker=checker,
-        limit=args.limit,
-        delay=args.delay,
-    )
+        updated_df, results_df = run_active_checks(
+            master_df,
+            checker=checker,
+            limit=args.limit,
+            delay=args.delay,
+        )
 
     print(f"Master file: {input_file}")
     print(f"Active rows checked: {len(results_df)}")

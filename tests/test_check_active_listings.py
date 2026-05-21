@@ -4,6 +4,7 @@ from scripts.check_active_listings import (
     ActiveCheckResult,
     classify_response,
     run_active_checks,
+    wait_for_rendered_state,
 )
 
 
@@ -12,6 +13,16 @@ class FakeResponse:
         self.url = url
         self.status_code = status_code
         self.text = text
+
+
+class FakeDriver:
+    def __init__(self, snapshots):
+        self.snapshots = list(snapshots)
+
+    def execute_script(self, _script):
+        if len(self.snapshots) > 1:
+            return self.snapshots.pop(0)
+        return self.snapshots[0]
 
 
 def test_classify_response_marks_listing_page_active():
@@ -40,6 +51,63 @@ def test_classify_response_marks_search_redirect_inactive():
 
     assert result.is_active is False
     assert result.status == "inactive_redirected_to_search"
+
+
+def test_classify_response_marks_empty_202_unknown_for_browser_fallback():
+    result = classify_response(
+        "https://www.propertyfinder.ae/en/plp/buy/villa-for-sale-dubai-arabian-ranches-2-lila-16104320.html",
+        FakeResponse(
+            "https://www.propertyfinder.ae/en/plp/buy/villa-for-sale-dubai-arabian-ranches-2-lila-16104320.html",
+            202,
+            "",
+        ),
+    )
+
+    assert result.is_active is True
+    assert result.status == "unknown_empty_202"
+
+
+def test_classify_response_marks_property_finder_gone_card_inactive():
+    result = classify_response(
+        "https://www.propertyfinder.ae/en/plp/buy/villa-for-sale-dubai-arabian-ranches-2-lila-16104320.html",
+        FakeResponse(
+            "https://www.propertyfinder.ae/en/plp/buy/villa-for-sale-dubai-arabian-ranches-2-lila-16104320.html",
+            200,
+            """
+            Sorry, this Villa for sale in Lila, Arabian Ranches 2 is no longer available
+            However we have hundreds of similar properties for you
+            View similar properties
+            """,
+        ),
+    )
+
+    assert result.is_active is False
+    assert result.status == "inactive_not_found_text"
+
+
+def test_wait_for_rendered_state_detects_gone_card():
+    driver = FakeDriver([{
+        "text": "Sorry, this Villa for sale in Lila, Arabian Ranches 2 is no longer available",
+        "html": '<script src="https://www.google.com/recaptcha/api.js"></script><img src="property-gone-image-en.svg">',
+        "hasGoneCard": True,
+    }])
+
+    state, _ = wait_for_rendered_state(driver, seconds=0)
+
+    assert state == "inactive"
+
+
+def test_wait_for_rendered_state_detects_real_listing_markers():
+    driver = FakeDriver([{
+        "text": "AED 6,800,000",
+        "html": "",
+        "hasPrice": True,
+        "hasAttributes": True,
+    }])
+
+    state, _ = wait_for_rendered_state(driver, seconds=0)
+
+    assert state == "active"
 
 
 def test_classify_response_keeps_human_verification_unknown_active():

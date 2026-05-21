@@ -25,6 +25,7 @@
     const oppPurposeFilter  = document.querySelector("#opp-purpose-filter");
     const opportunityPanel  = document.querySelector("#opportunity-panel");
     const aiReportButton = document.querySelector("#ai-report");
+    const agentPlanButton = document.querySelector("#agent-plan");
     const clientReportButton = document.querySelector("#client-report");
     const scenarioButtons = document.querySelectorAll(".scenario-button");
     const checkButton = document.querySelector("#check-openai");
@@ -61,7 +62,7 @@
     let lastReportContext = null;
     let lastRenderedData = null;
 
-    const wfSteps = [1, 2, 3, 4].map(n => document.querySelector(`#wf-${n}`));
+    const wfSteps = [1, 2, 3, 4, 5].map(n => document.querySelector(`#wf-${n}`));
     function setWorkflowStep(doneUpTo) {
       // Update step indicator pills
       wfSteps.forEach((el, i) => {
@@ -74,7 +75,8 @@
       promptBox.classList.toggle("prompt-ready", doneUpTo === 0);
       scenarioButtons.forEach(btn => btn.classList.toggle("step-ready", doneUpTo === 1));
       aiReportButton.classList.toggle("step-ready", doneUpTo === 2);
-      clientReportButton.classList.toggle("step-ready", doneUpTo === 3);
+      agentPlanButton.classList.toggle("step-ready", doneUpTo === 3);
+      clientReportButton.classList.toggle("step-ready", doneUpTo === 4);
     }
 
     // Sync quick-filter purpose with main purpose
@@ -283,7 +285,7 @@
       if (data.rank_context) lastRankContext = data.rank_context;
       if (data.report_context) lastReportContext = data.report_context;
       // Advance the workflow indicator based on how far we've got
-      if (data.report_context) setWorkflowStep(3);       // steps 1-3 done, client report next
+      if (data.report_context) setWorkflowStep(3);       // steps 1-3 done, agent plan next
       else if (data.rank_context) setWorkflowStep(2);    // steps 1-2 done, build report next
       else setWorkflowStep(1);                           // step 1 done, scenario next
     }
@@ -456,10 +458,16 @@
         <div class="owner-result">
           <div><strong>Owners:</strong> ${lead.owners || "Unknown"}</div>
           <div><strong>Numbers:</strong> ${lead.numbers || "Unknown"}</div>
+          <div><strong>Villa No:</strong> ${lead.villa_number || "Unknown"} &nbsp; <strong>Street:</strong> ${lead.street || "Unknown"}</div>
+          <div><strong>Community:</strong> ${lead.community || "Unknown"} &nbsp; <strong>Area:</strong> ${lead.area || "Unknown"}</div>
           <div><strong>Property:</strong> ${lead.property || "Unknown"}</div>
           <div><strong>Beds:</strong> ${lead.beds || "?"} &nbsp; <strong>Type:</strong> ${lead.type || "?"}</div>
+          <div><strong>Floors:</strong> ${lead.floors || "?"} &nbsp; <strong>Parking:</strong> ${lead.parking || "?"}</div>
           <div><strong>GFA:</strong> ${lead.gfa || "?"} &nbsp; <strong>BUA:</strong> ${lead.bua || "?"}</div>
           <div><strong>Asking:</strong> ${lead.asking || "?"} &nbsp; <strong>Rental:</strong> ${lead.rental || "?"}</div>
+          ${lead.land_number ? `<div><strong>Land number:</strong> ${lead.land_number}</div>` : ""}
+          ${(lead.latitude || lead.longitude) ? `<div><strong>Coordinates:</strong> ${lead.latitude || "?"}, ${lead.longitude || "?"}</div>` : ""}
+          ${lead.status ? `<div><strong>Status:</strong> ${lead.status}</div>` : ""}
           ${lead.notes ? `<div><strong>Notes:</strong> ${lead.notes}</div>` : ""}
           <div style="margin-top:4px;font-size:11px;color:var(--muted)">Matched by: ${data.match_type || "URL"}</div>
           ${urls}
@@ -692,6 +700,112 @@
       reportWindow.document.open();
       reportWindow.document.write(html);
       reportWindow.document.close();
+    }
+
+    function renderAgentPlan(plan) {
+      const actions = Array.isArray(plan.priority_actions) ? plan.priority_actions : [];
+      const checklist = Array.isArray(plan.scenario_checklist) ? plan.scenario_checklist : [];
+      const logic = Array.isArray(plan.decision_logic) ? plan.decision_logic : [];
+      const nextSteps = Array.isArray(plan.immediate_next_steps) ? plan.immediate_next_steps : [];
+      const warnings = Array.isArray(plan.warnings) ? plan.warnings : [];
+
+      const actionCards = actions.map((item) => {
+        const questions = Array.isArray(item.verification_questions) ? item.verification_questions : [];
+        return `
+          <article class="agent-action-card">
+            <div class="agent-action-top">
+              <span class="agent-priority">${escapeHtml(item.priority || "")}</span>
+              <div>
+                <h3>${escapeHtml(item.listing || "Listing to verify")}</h3>
+                <div class="agent-decision-row">
+                  <span class="agent-decision">${escapeHtml(item.decision || item.recommended_action || "Call to verify")}</span>
+                  ${item.owner_lookup_recommended ? `<span class="agent-mini-pill">Owner lookup</span>` : ""}
+                  ${item.risk_level ? `<span class="agent-mini-pill">${escapeHtml(item.risk_level)}</span>` : ""}
+                </div>
+              </div>
+            </div>
+            <p><strong>Why:</strong> ${escapeHtml(item.why || "")}</p>
+            <p><strong>Action:</strong> ${escapeHtml(item.recommended_action || "")}</p>
+            <div class="agent-call-box">
+              <div class="agent-box-label">Conversation angle</div>
+              <p>${escapeHtml(item.conversation_angle || "")}</p>
+              <div class="agent-box-label">Call opener</div>
+              <p>"${escapeHtml(item.call_opener || "")}"</p>
+            </div>
+            ${questions.length ? `<div class="agent-question-list"><strong>Questions:</strong><ul>${questions.map((q) => `<li>${escapeHtml(q)}</li>`).join("")}</ul></div>` : ""}
+            ${item.buyer_message ? `<div class="agent-buyer-message"><strong>Buyer message:</strong><p>${escapeHtml(item.buyer_message)}</p></div>` : ""}
+          </article>`;
+      }).join("");
+
+      aiPanel.hidden = false;
+      aiPanel.innerHTML = `
+        <section class="agent-plan">
+          <div class="agent-plan-header">
+            <div>
+              <h2>${escapeHtml(plan.title || "Agent Plan of Action")}</h2>
+              <p>${escapeHtml(plan.agent_summary || "")}</p>
+            </div>
+            <span class="agent-scenario">${escapeHtml(plan.scenario || "Scenario")}</span>
+          </div>
+          <div class="agent-action-grid">${actionCards || "<p>No agent actions returned.</p>"}</div>
+          <div class="agent-support-grid">
+            <div class="agent-support-box">
+              <h3>Scenario checklist</h3>
+              <ul>${checklist.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+            </div>
+            <div class="agent-support-box">
+              <h3>Decision logic</h3>
+              <ul>${logic.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+            </div>
+            <div class="agent-support-box">
+              <h3>Next steps</h3>
+              <ul>${nextSteps.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+            </div>
+            ${warnings.length ? `<div class="agent-support-box warning"><h3>Warnings</h3><ul>${warnings.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></div>` : ""}
+          </div>
+        </section>`;
+    }
+
+    async function runAgentPlan() {
+      const text = promptBox.value.trim();
+      const token = activeApiKey || tokenBox.value.trim();
+      if (!text) { promptBox.focus(); return; }
+      if (!token) { error.hidden = false; error.textContent = "Add and check an OpenAI API key first (AI key button above)."; return; }
+      if (!lastReportContext || !lastReportContext.ranked_urls?.length) {
+        error.hidden = false;
+        error.textContent = "Run Build Report first, then create the agent plan.";
+        return;
+      }
+      const rankedUrls = lastReportContext.ranked_urls;
+      const scenario = lastReportContext.scenario;
+      agentPlanButton.disabled = true;
+      agentPlanButton.textContent = "Planning...";
+      error.hidden = true;
+      aiPanel.hidden = false;
+      aiPanel.textContent = "Turning the built report into actions, call angles and verification logic...";
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 240000);
+      try {
+        const res = await fetch("/api/agent-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: text, purpose: purpose.value, scenario, listing_scope: listingScope.value, listing_communities: selectedListingCommunities(), market_scope: marketScope.value, market_communities: selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls }),
+          signal: controller.signal
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Agent plan failed");
+        if (data.report_context) lastReportContext = data.report_context;
+        renderAgentPlan(data.agent_plan || {});
+        setWorkflowStep(4);
+      } catch (err) {
+        error.hidden = false;
+        error.textContent = err.name === "AbortError" ? "Agent plan timed out. Try fewer ranked results." : err.message;
+        aiPanel.hidden = true;
+      } finally {
+        clearTimeout(timeoutId);
+        agentPlanButton.disabled = false;
+        agentPlanButton.textContent = "Agent plan";
+      }
     }
 
     function renderAiClientReport(report) {
@@ -933,7 +1047,7 @@
         renderAiClientReport(data.client_report || {});
         aiPanel.hidden = false;
         aiPanel.textContent = "Client report opened in a new tab.";
-        setWorkflowStep(4);
+        setWorkflowStep(5);
       } catch (err) {
         error.hidden = false;
         error.textContent = err.name === "AbortError" ? "Client report timed out. Try fewer ranked results." : err.message;
@@ -1231,6 +1345,7 @@
     estimateButton.addEventListener("click", () => { ensureApiKeyVisible(); runEstimate(); });
     oppScanButton.addEventListener("click", () => { ensureApiKeyVisible(); runOpportunityScan(); });
     aiReportButton.addEventListener("click", () => { ensureApiKeyVisible(); runBuildReport(); });
+    agentPlanButton.addEventListener("click", () => { ensureApiKeyVisible(); runAgentPlan(); });
     clientReportButton.addEventListener("click", () => { ensureApiKeyVisible(); runClientReport(); });
     scenarioButtons.forEach((btn) => btn.addEventListener("click", () => { ensureApiKeyVisible(); runScenario(btn.dataset.scenario, btn); }));
     promptBox.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") runSearch(); });

@@ -237,11 +237,16 @@ def test_lookup_owner_matches_property_finder_url():
             "Sell/Rent": "Rent & Buy",
             "Owners": "Philip George, Reena Philip Gee Varghese",
             "Numbers": "971504536785, 971555655360",
-            "No.": "182",
+            "Villa No.": "182",
             "Street": "4 street",
             "Community": "Casa",
             "Area": "Arabian Ranches 2",
             "Beds": "3",
+            "Floors": "2",
+            "Parking": "2",
+            "Land Number": "1421-0\r",
+            "Latitude": "25.03401651",
+            "Longitude": "55.26454267",
             "GFA": "4,359",
             "BUA": "3,248",
             "Type": "Type 1",
@@ -263,8 +268,32 @@ def test_lookup_owner_matches_property_finder_url():
     assert result["found"] is True
     assert result["match_type"] == "exact_url"
     assert result["lead"]["owners"] == "Philip George, Reena Philip Gee Varghese"
+    assert result["lead"]["villa_number"] == "182"
+    assert result["lead"]["street"] == "4 street"
+    assert result["lead"]["land_number"] == "1421-0"
+    assert result["lead"]["latitude"] == "25.03401651"
+    assert result["lead"]["longitude"] == "55.26454267"
     assert result["lead"]["property"] == "182, 4 street, Casa, Arabian Ranches 2"
     assert len(result["propertyfinder_urls"]) == 2
+
+
+def test_lookup_owner_falls_back_to_property_finder_listing_id():
+    owner_df = pd.DataFrame([
+        {
+            "Owner": "Door Knock",
+            "Villa No.": "66",
+            "Street": "3 street",
+            "Community": "Casa",
+            "Area": "Arabian Ranches 2",
+            "Link": "https://www.propertyfinder.ae/en/plp/rent/villa-for-rent-dubai-arabian-ranches-2-casa-65579576.html",
+        }
+    ])
+
+    result = lookup_owner_in_df(owner_df, "https://www.propertyfinder.ae/en/rent/65579576")
+
+    assert result["found"] is True
+    assert result["match_type"] == "listing_id"
+    assert result["lead"]["villa_number"] == "66"
 
 
 def test_lookup_owner_handles_missing_file(tmp_path):

@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlparse
 from workflow_paths import normalize_purpose
 from webapp_backend import (
     DEFAULT_RESULT_LIMIT,
+    ai_agent_plan_prompt,
     ai_client_report_prompt,
     ai_fallback_prompt,
     ai_feedback_prompt,
@@ -309,7 +310,7 @@ class AppHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlparse(self.path).path
 
-        if path not in {"/api/match", "/api/quick-query", "/api/ai-feedback", "/api/ai-fallback", "/api/ai-scenario", "/api/ai-scenario-rank", "/api/ai-scenario-report", "/api/client-report", "/api/check-openai", "/api/owner-lookup", "/api/estimate", "/api/opportunity-scan"}:
+        if path not in {"/api/match", "/api/quick-query", "/api/ai-feedback", "/api/ai-fallback", "/api/ai-scenario", "/api/ai-scenario-rank", "/api/ai-scenario-report", "/api/agent-plan", "/api/client-report", "/api/check-openai", "/api/owner-lookup", "/api/estimate", "/api/opportunity-scan"}:
             self.send_error(404)
             return
 
@@ -393,6 +394,19 @@ class AppHandler(BaseHTTPRequestHandler):
                 )
             elif path == "/api/client-report":
                 result = ai_client_report_prompt(
+                    payload.get("prompt", ""),
+                    payload.get("scenario", "best_value"),
+                    ranked_urls=payload.get("ranked_urls", []),
+                    selected_purpose=payload.get("purpose", "auto"),
+                    api_key=payload.get("api_key"),
+                    limit=int(payload.get("limit", 6)),
+                    listing_scope=payload.get("listing_scope", "auto"),
+                    listing_communities=payload.get("listing_communities", []),
+                    market_scope=payload.get("market_scope", "auto"),
+                    market_communities=payload.get("market_communities", []),
+                )
+            elif path == "/api/agent-plan":
+                result = ai_agent_plan_prompt(
                     payload.get("prompt", ""),
                     payload.get("scenario", "best_value"),
                     ranked_urls=payload.get("ranked_urls", []),

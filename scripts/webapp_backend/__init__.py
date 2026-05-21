@@ -5,6 +5,7 @@ from ai_enquiry_ranker import merge_ai_rankings, rank_matches_with_ai  # noqa: F
 from enquiry_matcher import clean_number, match_enquiry  # noqa: F401
 
 from .ai_engine import (  # noqa: F401
+    ai_agent_plan_prompt,
     ai_client_report_prompt,
     ai_fallback_prompt,
     ai_feedback_prompt,
