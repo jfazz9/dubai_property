@@ -246,8 +246,8 @@ def test_lookup_owner_matches_property_finder_url():
         {
             "Date": "14/05/2026",
             "Sell/Rent": "Rent & Buy",
-            "Owners": "Philip George, Reena Philip Gee Varghese",
-            "Numbers": "971504536785, 971555655360",
+            "Owners": "Example Owner One, Example Owner Two",
+            "Numbers": "TEST_PHONE_ONE, TEST_PHONE_TWO",
             "Villa No.": "182",
             "Street": "4 street",
             "Community": "Casa",
@@ -278,7 +278,7 @@ def test_lookup_owner_matches_property_finder_url():
 
     assert result["found"] is True
     assert result["match_type"] == "exact_url"
-    assert result["lead"]["owners"] == "Philip George, Reena Philip Gee Varghese"
+    assert result["lead"]["owners"] == "Example Owner One, Example Owner Two"
     assert result["lead"]["villa_number"] == "182"
     assert result["lead"]["street"] == "4 street"
     assert result["lead"]["land_number"] == "1421-0"

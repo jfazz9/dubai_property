@@ -276,7 +276,7 @@ def test_valuation_estimate_sale_returns_low_mid_high(
     result = valuation_estimate(
         "Rosa Type 3, 4 bed villa, corner plot, fully upgraded",
         selected_purpose="sale",
-        api_key="sk-test-key",
+        api_key="test-api-key",
     )
 
     assert result["estimate"]["low"] == 4_600_000
@@ -309,7 +309,7 @@ def test_valuation_estimate_rental_uses_annual_rent(
     result = valuation_estimate(
         "Rosa Type 3, 4 bed rental villa",
         selected_purpose="rent",
-        api_key="sk-test-key",
+        api_key="test-api-key",
     )
 
     assert result["estimate"]["low"] == 170_000
@@ -358,7 +358,7 @@ def test_valuation_estimate_community_type_filter_applied(
     result = valuation_estimate(
         "Rosa Type 3, 4 bed villa",
         selected_purpose="sale",
-        api_key="sk-test-key",
+        api_key="test-api-key",
     )
 
     # Verify that the AI was called — and that Rosa comps were used (not Lila)
