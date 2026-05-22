@@ -1,6 +1,8 @@
 import json
 import sys
 
+import pandas as pd
+
 from ai_enquiry_ranker import client_for_api_key
 from ai_enquiry_ranker import merge_ai_rankings
 from ai_enquiry_ranker import row_to_ai_payload
@@ -612,6 +614,8 @@ def ai_agent_plan_prompt(
     text,
     scenario="best_value",
     ranked_urls=None,
+    built_matches=None,
+    built_report=None,
     selected_purpose="auto",
     api_key=None,
     limit=6,
@@ -623,37 +627,75 @@ def ai_agent_plan_prompt(
     if not api_key:
         raise RuntimeError("Missing OpenAI API key.")
 
+    scenario = scenario or "best_value"
     scenario_config = SCENARIOS.get(scenario) or SCENARIOS.get("best_value")
     scenario_intent = scenario if scenario in {"best_value", "negotiation", "listing_opportunity", "upgrade_potential", "move_in_ready"} else "auto"
     enquiry = parse_prompt(text, selected_purpose, scenario_intent, market_scope, market_communities, listing_scope, listing_communities)
     enquiry["analysis_focus"] = scenario_config["focus"]
 
     shortlist_limit = max(limit, DEFAULT_AI_SHORTLIST_LIMIT)
+    master_df = pd.DataFrame()
+    path = "built_report_payload"
 
-    if scenario == "fallback":
-        master_df, path = _read_master(enquiry["purpose"])
-        matches_df = build_budget_fallback_dataframe(enquiry, master_df, limit=shortlist_limit)
-        enquiry = dict(enquiry)
-        enquiry["preferred_category"] = "townhouse"
-        enquiry["strict_category"] = True
+    if built_matches:
+        matches_df = pd.DataFrame(built_matches)
     else:
-        if scenario == "budget_reality":
-            enquiry["budget_reality_mode"] = True
+        if scenario == "fallback":
+            master_df, path = _read_master(enquiry["purpose"])
+            matches_df = build_budget_fallback_dataframe(enquiry, master_df, limit=shortlist_limit)
+            enquiry = dict(enquiry)
+            enquiry["preferred_category"] = "townhouse"
+            enquiry["strict_category"] = True
+        else:
+            if scenario == "budget_reality":
+                enquiry["budget_reality_mode"] = True
 
-        matches_df, master_df, path = build_matches_dataframe(dict(enquiry), shortlist_limit)
+            matches_df, master_df, path = build_matches_dataframe(dict(enquiry), shortlist_limit)
 
-        if scenario == "budget_reality" or enquiry.get("budget_reality_mode"):
-            reality_df = build_budget_reality_primary_dataframe(enquiry, master_df, limit=shortlist_limit)
+            if scenario == "budget_reality" or enquiry.get("budget_reality_mode"):
+                reality_df = build_budget_reality_primary_dataframe(enquiry, master_df, limit=shortlist_limit)
 
-            if not reality_df.empty:
-                matches_df = reality_df
+                if not reality_df.empty:
+                    matches_df = reality_df
+
+    if matches_df.empty and scenario != "budget_reality" and enquiry.get("preferred_category") and enquiry.get("budget"):
+        if master_df.empty:
+            master_df, path = _read_master(enquiry["purpose"])
+
+        reality_enquiry = dict(enquiry)
+        reality_enquiry["budget_reality_mode"] = True
+        reality_df = build_budget_reality_primary_dataframe(reality_enquiry, master_df, limit=shortlist_limit)
+
+        if not reality_df.empty:
+            scenario = "budget_reality"
+            scenario_config = SCENARIOS.get("budget_reality")
+            enquiry = reality_enquiry
+            enquiry["analysis_focus"] = scenario_config["focus"]
+            matches_df = reality_df
+
+    if matches_df.empty and ranked_urls:
+        if master_df.empty:
+            master_df, path = _read_master(enquiry["purpose"])
+
+        order = {url: index for index, url in enumerate(ranked_urls)}
+        matches_df = master_df[master_df["url"].isin(order)].copy()
+
+        if not matches_df.empty:
+            matches_df["_ranked_order"] = matches_df["url"].map(order)
+            matches_df = matches_df.sort_values("_ranked_order").drop(columns=["_ranked_order"])
 
     if matches_df.empty:
         raise RuntimeError("No suitable rows were found for this agent plan.")
 
     if ranked_urls:
+        if master_df.empty:
+            master_df, path = _read_master(enquiry["purpose"])
+
         order = {url: index for index, url in enumerate(ranked_urls)}
         ranked_df = matches_df[matches_df["url"].isin(order)].copy()
+
+        if ranked_df.empty:
+            ranked_df = master_df[master_df["url"].isin(order)].copy()
 
         if ranked_df.empty:
             raise RuntimeError("The previous built report shortlist is no longer available. Run Build Report again.")
@@ -668,6 +710,7 @@ def ai_agent_plan_prompt(
         "scenario": scenario,
         "scenario_title": scenario_config["report_title"],
         "market_context": market_context,
+        "built_report": built_report or {},
         "candidate_rows": _agent_plan_rows(matches_df),
         "allowed_decisions": [
             "Pursue now",

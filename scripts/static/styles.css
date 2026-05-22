@@ -340,6 +340,16 @@
     }
     .chip:hover { color: var(--ink); background: var(--wash); }
     .chip:disabled { opacity: 0.5; cursor: wait; }
+    .chip.scenario-selected {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 0 2px #d4f0e8;
+    }
+    .chip.scenario-selected:hover {
+      background: #085c4a;
+      color: #fff;
+    }
     .chip.general { border-color: var(--accent-2); color: var(--accent-2); }
     .chip.general:hover { background: #fffaf2; }
     .chip.estimate { border-color: #6d3bbf; color: #6d3bbf; }

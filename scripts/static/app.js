@@ -61,6 +61,7 @@
     let lastRankContext = null;
     let lastReportContext = null;
     let lastRenderedData = null;
+    let activeScenario = "";
 
     const wfSteps = [1, 2, 3, 4, 5].map(n => document.querySelector(`#wf-${n}`));
     function setWorkflowStep(doneUpTo) {
@@ -77,6 +78,13 @@
       aiReportButton.classList.toggle("step-ready", doneUpTo === 2);
       agentPlanButton.classList.toggle("step-ready", doneUpTo === 3);
       clientReportButton.classList.toggle("step-ready", doneUpTo === 4);
+    }
+
+    function setActiveScenario(scenario) {
+      activeScenario = scenario || "";
+      scenarioButtons.forEach((btn) => {
+        btn.classList.toggle("scenario-selected", Boolean(activeScenario) && btn.dataset.scenario === activeScenario);
+      });
     }
 
     // Sync quick-filter purpose with main purpose
@@ -283,7 +291,9 @@
       fallbackSection.hidden = fallback.length === 0;
       fallbackResults.innerHTML = renderListings(fallback, data.enquiry.purpose);
       if (data.rank_context) lastRankContext = data.rank_context;
+      if (data.rank_context?.scenario) setActiveScenario(data.rank_context.scenario);
       if (data.report_context) lastReportContext = data.report_context;
+      if (data.report_context?.scenario) setActiveScenario(data.report_context.scenario);
       // Advance the workflow indicator based on how far we've got
       if (data.report_context) setWorkflowStep(3);       // steps 1-3 done, agent plan next
       else if (data.rank_context) setWorkflowStep(2);    // steps 1-2 done, build report next
@@ -318,6 +328,7 @@
       lastRankContext = null;
       lastReportContext = null;
       lastRenderedData = null;
+      setActiveScenario("");
       setWorkflowStep(0);
       promptBox.focus();
     }
@@ -771,13 +782,20 @@
       const token = activeApiKey || tokenBox.value.trim();
       if (!text) { promptBox.focus(); return; }
       if (!token) { error.hidden = false; error.textContent = "Add and check an OpenAI API key first (AI key button above)."; return; }
-      if (!lastReportContext || !lastReportContext.ranked_urls?.length) {
+      const builtMatches = Array.isArray(lastRenderedData?.matches) ? lastRenderedData.matches.slice(0, 8) : [];
+      if ((!lastReportContext || !lastReportContext.ranked_urls?.length) && !builtMatches.length) {
         error.hidden = false;
         error.textContent = "Run Build Report first, then create the agent plan.";
         return;
       }
-      const rankedUrls = lastReportContext.ranked_urls;
-      const scenario = lastReportContext.scenario;
+      const rankedUrls = lastReportContext?.ranked_urls || builtMatches.map((item) => item.url).filter(Boolean);
+      const scenario = lastReportContext?.scenario || activeScenario || intent.value;
+      const builtReport = {
+        title: lastRenderedData?.report_title || "",
+        summary: lastRenderedData?.client_response || "",
+        market_read: lastRenderedData?.ai?.market_read || "",
+        conclusion: lastRenderedData?.ai?.client_response || "",
+      };
       agentPlanButton.disabled = true;
       agentPlanButton.textContent = "Planning...";
       error.hidden = true;
@@ -789,7 +807,7 @@
         const res = await fetch("/api/agent-plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: text, purpose: purpose.value, scenario, listing_scope: listingScope.value, listing_communities: selectedListingCommunities(), market_scope: marketScope.value, market_communities: selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls }),
+          body: JSON.stringify({ prompt: text, purpose: purpose.value, scenario, listing_scope: listingScope.value, listing_communities: selectedListingCommunities(), market_scope: marketScope.value, market_communities: selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls, built_matches: builtMatches, built_report: builtReport }),
           signal: controller.signal
         });
         const data = await res.json();

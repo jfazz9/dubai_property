@@ -194,6 +194,17 @@ def test_parse_prompt_understands_budget_reality_mode_and_no_townhouse():
     assert enquiry["budget_reality_mode"] is True
 
 
+def test_parse_prompt_keeps_villa_primary_when_townhouse_is_only_alternative():
+    enquiry = parse_prompt(
+        "3 bed villa budget of 200k move in june, alternative of a townhouse",
+        "rent",
+    )
+
+    assert enquiry["preferred_category"] == "villa"
+    assert enquiry["strict_category"] is True
+    assert enquiry["move_month"] == 6
+
+
 def test_split_bedroom_search_keeps_best_score_before_deduping():
     master_df = pd.DataFrame([
         {

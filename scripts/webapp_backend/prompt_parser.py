@@ -188,6 +188,9 @@ def parse_explicit_category(text):
     if re.search(r"\b(no|not|dont|don't|doesnt|doesn't|without)\s+(?:want\s+)?(?:a\s+)?(?:town\s*house|townhouse)s?\b", normalized):
         return "villa"
 
+    if re.search(r"\bvilla\b", normalized) and re.search(r"\b(alternative|fallback|compromise|backup)\b.{0,40}\b(?:town\s*house|townhouse)s?\b", normalized):
+        return "villa"
+
     if re.search(r"\btown\s*house\b|\btownhouse\b", normalized):
         return "townhouse"
 

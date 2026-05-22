@@ -47,7 +47,32 @@ AI_RANKING_SCHEMA = {
 
 
 def clean_ai_value(value):
-    if value is None or pd.isna(value):
+    if value is None:
+        return None
+
+    if isinstance(value, dict):
+        return {
+            key: cleaned
+            for key, item in value.items()
+            if (cleaned := clean_ai_value(item)) is not None
+        }
+
+    if isinstance(value, (list, tuple, set)):
+        return [
+            cleaned
+            for item in value
+            if (cleaned := clean_ai_value(item)) is not None
+        ]
+
+    if hasattr(value, "tolist") and not hasattr(value, "item"):
+        return clean_ai_value(value.tolist())
+
+    try:
+        is_missing = pd.isna(value)
+    except (TypeError, ValueError):
+        is_missing = False
+
+    if isinstance(is_missing, bool) and is_missing:
         return None
 
     if hasattr(value, "item"):
