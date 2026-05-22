@@ -722,6 +722,11 @@
 
       const actionCards = actions.map((item) => {
         const questions = Array.isArray(item.verification_questions) ? item.verification_questions : [];
+        const listingUrl = item.listing_url || "";
+        const listingActions = listingUrl ? `
+                  <a class="agent-action-link" href="${escapeHtml(listingUrl)}" target="_blank" rel="noreferrer">Open</a>
+                  <button class="agent-action-button copy-link-button" type="button" data-copy="${escapeHtml(listingUrl)}">Copy</button>
+                  <button class="agent-action-button owner-inline-lookup" type="button" data-url="${escapeHtml(listingUrl)}">Owner</button>` : "";
         return `
           <article class="agent-action-card">
             <div class="agent-action-top">
@@ -732,6 +737,7 @@
                   <span class="agent-decision">${escapeHtml(item.decision || item.recommended_action || "Call to verify")}</span>
                   ${item.owner_lookup_recommended ? `<span class="agent-mini-pill">Owner lookup</span>` : ""}
                   ${item.risk_level ? `<span class="agent-mini-pill">${escapeHtml(item.risk_level)}</span>` : ""}
+                  ${listingActions}
                 </div>
               </div>
             </div>
@@ -1359,6 +1365,7 @@
     results.addEventListener("click", handleListingActionClick);
     aboveBudgetResults.addEventListener("click", handleListingActionClick);
     fallbackResults.addEventListener("click", handleListingActionClick);
+    aiPanel.addEventListener("click", handleListingActionClick);
     aiButton.addEventListener("click", () => { ensureApiKeyVisible(); runAiFeedback(); });
     estimateButton.addEventListener("click", () => { ensureApiKeyVisible(); runEstimate(); });
     oppScanButton.addEventListener("click", () => { ensureApiKeyVisible(); runOpportunityScan(); });

@@ -494,6 +494,27 @@
       font-size: 11px;
       font-weight: 700;
     }
+    .agent-action-link,
+    .agent-action-button {
+      min-height: 22px;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--accent);
+      padding: 0 8px;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .agent-action-link:hover,
+    .agent-action-button:hover {
+      background: #f0faf6;
+      border-color: var(--accent);
+    }
     .agent-action-card p {
       margin: 7px 0;
       line-height: 1.5;

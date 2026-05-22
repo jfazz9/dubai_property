@@ -824,18 +824,26 @@ def ai_agent_plan_prompt(
         max_output_tokens=6000,
     )
 
+    agent_plan = json.loads(response.output_text)
+    source_urls = [
+        url
+        for url in matches_df["url"].head(limit).tolist()
+        if url
+    ]
+    priority_actions = agent_plan.get("priority_actions") or []
+
+    for index, action in enumerate(priority_actions):
+        if isinstance(action, dict) and index < len(source_urls):
+            action["listing_url"] = source_urls[index]
+
     return {
-        "agent_plan": json.loads(response.output_text),
+        "agent_plan": agent_plan,
         "enquiry": enquiry,
         "source_path": str(path),
         "candidate_count": int(len(matches_df)),
         "report_context": {
             "scenario": scenario,
-            "ranked_urls": [
-                url
-                for url in matches_df["url"].head(limit).tolist()
-                if url
-            ],
+            "ranked_urls": source_urls,
         },
     }
 
