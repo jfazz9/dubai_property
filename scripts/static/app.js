@@ -60,10 +60,11 @@
     let activeApiKey  = "";
     let lastRankContext = null;
     let lastReportContext = null;
+    let lastBuiltReport = null;
     let lastRenderedData = null;
     let activeScenario = "";
 
-    const wfSteps = [1, 2, 3, 4, 5].map(n => document.querySelector(`#wf-${n}`));
+    const wfSteps = [1, 2, 3, 4].map(n => document.querySelector(`#wf-${n}`));
     function setWorkflowStep(doneUpTo) {
       // Update step indicator pills
       wfSteps.forEach((el, i) => {
@@ -76,8 +77,9 @@
       promptBox.classList.toggle("prompt-ready", doneUpTo === 0);
       scenarioButtons.forEach(btn => btn.classList.toggle("step-ready", doneUpTo === 1));
       aiReportButton.classList.toggle("step-ready", doneUpTo === 2);
-      agentPlanButton.classList.toggle("step-ready", doneUpTo === 3);
-      clientReportButton.classList.toggle("step-ready", doneUpTo === 4);
+      const outputReady = doneUpTo === 3 || doneUpTo === 4;
+      agentPlanButton.classList.toggle("step-ready", outputReady);
+      clientReportButton.classList.toggle("step-ready", outputReady);
     }
 
     function setActiveScenario(scenario) {
@@ -266,6 +268,25 @@
       lookupOwner();
     }
 
+    function snapshotBuiltReport(data) {
+      const context = data.report_context || {};
+      return {
+        prompt: promptBox.value.trim(),
+        purpose: data.enquiry?.purpose || purpose.value,
+        scenario: context.scenario || activeScenario || intent.value,
+        ranked_urls: Array.isArray(context.ranked_urls) ? context.ranked_urls.slice() : (data.matches || []).map((item) => item.url).filter(Boolean),
+        matches: Array.isArray(data.matches) ? data.matches.slice() : [],
+        report_title: data.report_title || "",
+        client_response: data.client_response || "",
+        ai: data.ai || {},
+        enquiry: data.enquiry || {},
+        listing_scope: listingScope.value,
+        listing_communities: selectedListingCommunities(),
+        market_scope: marketScope.value,
+        market_communities: selectedMarketCommunities(),
+      };
+    }
+
     function render(data) {
       lastRenderedData = data;
       error.hidden = true;
@@ -292,10 +313,15 @@
       fallbackResults.innerHTML = renderListings(fallback, data.enquiry.purpose);
       if (data.rank_context) lastRankContext = data.rank_context;
       if (data.rank_context?.scenario) setActiveScenario(data.rank_context.scenario);
-      if (data.report_context) lastReportContext = data.report_context;
+      if (data.report_context) {
+        lastReportContext = data.report_context;
+        lastBuiltReport = snapshotBuiltReport(data);
+      } else {
+        lastBuiltReport = null;
+      }
       if (data.report_context?.scenario) setActiveScenario(data.report_context.scenario);
       // Advance the workflow indicator based on how far we've got
-      if (data.report_context) setWorkflowStep(3);       // steps 1-3 done, agent plan next
+      if (data.report_context) setWorkflowStep(3);       // steps 1-3 done, outputs next
       else if (data.rank_context) setWorkflowStep(2);    // steps 1-2 done, build report next
       else setWorkflowStep(1);                           // step 1 done, scenario next
     }
@@ -327,6 +353,7 @@
       status.textContent = activeApiKey ? "API active" : "Local data only";
       lastRankContext = null;
       lastReportContext = null;
+      lastBuiltReport = null;
       lastRenderedData = null;
       setActiveScenario("");
       setWorkflowStep(0);
@@ -788,19 +815,20 @@
       const token = activeApiKey || tokenBox.value.trim();
       if (!text) { promptBox.focus(); return; }
       if (!token) { error.hidden = false; error.textContent = "Add and check an OpenAI API key first (AI key button above)."; return; }
-      const builtMatches = Array.isArray(lastRenderedData?.matches) ? lastRenderedData.matches.slice(0, 8) : [];
-      if ((!lastReportContext || !lastReportContext.ranked_urls?.length) && !builtMatches.length) {
+      const built = lastBuiltReport;
+      const builtMatches = Array.isArray(built?.matches) ? built.matches.slice(0, 8) : [];
+      if ((!built || !built.ranked_urls?.length) && !builtMatches.length) {
         error.hidden = false;
         error.textContent = "Run Build Report first, then create the agent plan.";
         return;
       }
-      const rankedUrls = lastReportContext?.ranked_urls || builtMatches.map((item) => item.url).filter(Boolean);
-      const scenario = lastReportContext?.scenario || activeScenario || intent.value;
+      const rankedUrls = built?.ranked_urls || builtMatches.map((item) => item.url).filter(Boolean);
+      const scenario = built?.scenario || activeScenario || intent.value;
       const builtReport = {
-        title: lastRenderedData?.report_title || "",
-        summary: lastRenderedData?.client_response || "",
-        market_read: lastRenderedData?.ai?.market_read || "",
-        conclusion: lastRenderedData?.ai?.client_response || "",
+        title: built?.report_title || "",
+        summary: built?.client_response || "",
+        market_read: built?.ai?.market_read || "",
+        conclusion: built?.ai?.client_response || "",
       };
       agentPlanButton.disabled = true;
       agentPlanButton.textContent = "Planning...";
@@ -813,14 +841,13 @@
         const res = await fetch("/api/agent-plan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: text, purpose: purpose.value, scenario, listing_scope: listingScope.value, listing_communities: selectedListingCommunities(), market_scope: marketScope.value, market_communities: selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls, built_matches: builtMatches, built_report: builtReport }),
+          body: JSON.stringify({ prompt: built?.prompt || text, purpose: built?.purpose || purpose.value, scenario, listing_scope: built?.listing_scope || listingScope.value, listing_communities: built?.listing_communities || selectedListingCommunities(), market_scope: built?.market_scope || marketScope.value, market_communities: built?.market_communities || selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls, built_matches: builtMatches, built_report: builtReport }),
           signal: controller.signal
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Agent plan failed");
-        if (data.report_context) lastReportContext = data.report_context;
         renderAgentPlan(data.agent_plan || {});
-        setWorkflowStep(4);
+        setWorkflowStep(3);
       } catch (err) {
         error.hidden = false;
         error.textContent = err.name === "AbortError" ? "Agent plan timed out. Try fewer ranked results." : err.message;
@@ -1045,13 +1072,14 @@
       const token = activeApiKey || tokenBox.value.trim();
       if (!text) { promptBox.focus(); return; }
       if (!token) { error.hidden = false; error.textContent = "Add and check an OpenAI API key first (AI key button above)."; return; }
-      if (!lastReportContext || !lastReportContext.ranked_urls?.length) {
+      const built = lastBuiltReport;
+      if (!built || !built.ranked_urls?.length) {
         error.hidden = false;
         error.textContent = "Run Build Report first, then create a client report.";
         return;
       }
-      const rankedUrls = lastReportContext.ranked_urls;
-      const scenario = lastReportContext.scenario;
+      const rankedUrls = built.ranked_urls;
+      const scenario = built.scenario;
       clientReportButton.disabled = true;
       clientReportButton.textContent = "Writing…";
       error.hidden = true;
@@ -1063,7 +1091,7 @@
         const res = await fetch("/api/client-report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: text, purpose: purpose.value, scenario, listing_scope: listingScope.value, listing_communities: selectedListingCommunities(), market_scope: marketScope.value, market_communities: selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls }),
+          body: JSON.stringify({ prompt: built.prompt || text, purpose: built.purpose || purpose.value, scenario, listing_scope: built.listing_scope || listingScope.value, listing_communities: built.listing_communities || selectedListingCommunities(), market_scope: built.market_scope || marketScope.value, market_communities: built.market_communities || selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls }),
           signal: controller.signal
         });
         const data = await res.json();
@@ -1071,7 +1099,7 @@
         renderAiClientReport(data.client_report || {});
         aiPanel.hidden = false;
         aiPanel.textContent = "Client report opened in a new tab.";
-        setWorkflowStep(5);
+        setWorkflowStep(4);
       } catch (err) {
         error.hidden = false;
         error.textContent = err.name === "AbortError" ? "Client report timed out. Try fewer ranked results." : err.message;
