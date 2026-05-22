@@ -397,6 +397,8 @@ class AppHandler(BaseHTTPRequestHandler):
                     payload.get("prompt", ""),
                     payload.get("scenario", "best_value"),
                     ranked_urls=payload.get("ranked_urls", []),
+                    built_matches=payload.get("built_matches", []),
+                    built_report=payload.get("built_report", {}),
                     selected_purpose=payload.get("purpose", "auto"),
                     api_key=payload.get("api_key"),
                     limit=int(payload.get("limit", 6)),

@@ -852,6 +852,8 @@ def ai_client_report_prompt(
     text,
     scenario="best_value",
     ranked_urls=None,
+    built_matches=None,
+    built_report=None,
     selected_purpose="auto",
     api_key=None,
     limit=6,
@@ -868,12 +870,29 @@ def ai_client_report_prompt(
     enquiry = parse_prompt(text, selected_purpose, scenario_intent, market_scope, market_communities, listing_scope, listing_communities)
     enquiry["analysis_focus"] = scenario_config["focus"]
 
-    matches_df, master_df, path = build_matches_dataframe(dict(enquiry), max(limit, DEFAULT_AI_SHORTLIST_LIMIT))
+    master_df = pd.DataFrame()
+    path = "built_report_payload"
 
-    if matches_df.empty:
-        raise RuntimeError("No suitable rows were found for this client report.")
+    if built_matches:
+        matches_df = pd.DataFrame(built_matches)
+    else:
+        matches_df, master_df, path = build_matches_dataframe(dict(enquiry), max(limit, DEFAULT_AI_SHORTLIST_LIMIT))
+
+    if matches_df.empty and ranked_urls:
+        if master_df.empty:
+            master_df, path = _read_master(enquiry["purpose"])
+
+        order = {url: index for index, url in enumerate(ranked_urls)}
+        matches_df = master_df[master_df["url"].isin(order)].copy()
+
+        if not matches_df.empty:
+            matches_df["_ranked_order"] = matches_df["url"].map(order)
+            matches_df = matches_df.sort_values("_ranked_order").drop(columns=["_ranked_order"])
 
     if ranked_urls:
+        if master_df.empty:
+            master_df, path = _read_master(enquiry["purpose"])
+
         order = {url: index for index, url in enumerate(ranked_urls)}
         ranked_df = matches_df[matches_df["url"].isin(order)].copy()
 
@@ -881,12 +900,16 @@ def ai_client_report_prompt(
             ranked_df["_ranked_order"] = ranked_df["url"].map(order)
             matches_df = ranked_df.sort_values("_ranked_order").drop(columns=["_ranked_order"])
 
+    if matches_df.empty:
+        raise RuntimeError("No suitable rows were found for this client report.")
+
     matches_df = matches_df.head(max(1, min(int(limit or 6), 8)))
     market_context = build_market_context(enquiry, matches_df)
     payload = {
         "client_brief": enquiry,
         "scenario": scenario,
         "market_context": market_context,
+        "built_report": built_report or {},
         "style_reference": {
             "structure": [
                 "01 — RECENT TRANSACTION DATA: recent sold transactions table with summary stats and a narrative paragraph. community_scope must list the exact communities the transaction data covers, e.g. 'Casa · Lila · Palma' — taken from market_context.scope.comp_communities.",

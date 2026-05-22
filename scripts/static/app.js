@@ -1091,7 +1091,7 @@
         const res = await fetch("/api/client-report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: built.prompt || text, purpose: built.purpose || purpose.value, scenario, listing_scope: built.listing_scope || listingScope.value, listing_communities: built.listing_communities || selectedListingCommunities(), market_scope: built.market_scope || marketScope.value, market_communities: built.market_communities || selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls }),
+          body: JSON.stringify({ prompt: built.prompt || text, purpose: built.purpose || purpose.value, scenario, listing_scope: built.listing_scope || listingScope.value, listing_communities: built.listing_communities || selectedListingCommunities(), market_scope: built.market_scope || marketScope.value, market_communities: built.market_communities || selectedMarketCommunities(), api_key: token, limit: 6, ranked_urls: rankedUrls, built_matches: built.matches || [], built_report: { title: built.report_title || "", summary: built.client_response || "", market_read: built.ai?.market_read || "", conclusion: built.ai?.client_response || "" } }),
           signal: controller.signal
         });
         const data = await res.json();
