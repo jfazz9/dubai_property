@@ -159,6 +159,13 @@
     closeOwnerDrawer.addEventListener("click", closeDrawer);
     drawerOverlay.addEventListener("click", closeDrawer);
 
+    // Auto-build toggle — grey out Build Report button while checked
+    function syncAutoBuildState() {
+      aiReportButton?.classList.toggle("build-auto", !!autoBuildReport?.checked);
+    }
+    autoBuildReport?.addEventListener("change", syncAutoBuildState);
+    syncAutoBuildState();
+
     // Help panel
     helpToggle.addEventListener("click", () => {
       helpPanel.hidden = !helpPanel.hidden;

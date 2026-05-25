@@ -298,6 +298,11 @@
       align-items: center;
     }
     /* Build Report button state after execution */
+    #ai-report.build-auto {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
     #ai-report.build-done {
       opacity: 0.4;
       cursor: default;
