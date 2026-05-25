@@ -291,6 +291,26 @@
       color: var(--line);
       flex-shrink: 0;
     }
+    /* Two sibling ④ pills sit side-by-side with no arrow between them */
+    .wf-output-group {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    /* Build Report button state after execution */
+    #ai-report.build-done {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
+    #ai-report.build-failed {
+      border-color: var(--danger) !important;
+      color: var(--danger) !important;
+      box-shadow: 0 0 0 2px rgba(155,45,32,0.2) !important;
+    }
+    #ai-report.build-failed::after {
+      content: " ⚠ Retry";
+    }
     /* Prompt box glows green when it's the starting point */
     textarea.prompt-ready {
       border-color: var(--accent);

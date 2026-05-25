@@ -65,22 +65,33 @@
     let lastRenderedData = null;
     let activeScenario = "";
 
-    const wfSteps = [1, 2, 3, 4].map(n => document.querySelector(`#wf-${n}`));
+    const wfSteps = [1, 2, 3].map(n => document.querySelector(`#wf-${n}`));
+    const wf4a = document.querySelector("#wf-4a");  // Agent Plan pill
+    const wf4b = document.querySelector("#wf-4b");  // Client Report pill
     function setWorkflowStep(doneUpTo) {
-      // Update step indicator pills
+      // Update steps ①②③
       wfSteps.forEach((el, i) => {
         if (!el) return;
         el.classList.remove("done", "active");
         if (i < doneUpTo) el.classList.add("done");
         else if (i === doneUpTo) el.classList.add("active");
       });
-      // Light up the relevant buttons to show what's ready to use
+      // Button highlights
       promptBox.classList.toggle("prompt-ready", doneUpTo === 0);
       scenarioButtons.forEach(btn => btn.classList.toggle("step-ready", doneUpTo === 1));
       aiReportButton.classList.toggle("step-ready", doneUpTo === 2);
-      const outputReady = doneUpTo === 3 || doneUpTo === 4;
+      const outputReady = doneUpTo >= 3;
       agentPlanButton.classList.toggle("step-ready", outputReady);
       clientReportButton.classList.toggle("step-ready", outputReady);
+      // Output pills ④ — managed independently, reset when going backwards
+      if (doneUpTo < 3) {
+        [wf4a, wf4b].forEach(el => el?.classList.remove("done", "active"));
+        aiReportButton.classList.remove("build-done", "build-failed");
+      } else if (doneUpTo === 3) {
+        // Build Report done — activate both output pills (unless already completed)
+        if (!wf4a?.classList.contains("done")) wf4a?.classList.add("active");
+        if (!wf4b?.classList.contains("done")) wf4b?.classList.add("active");
+      }
     }
 
     function setActiveScenario(scenario) {
@@ -322,9 +333,12 @@
       }
       if (data.report_context?.scenario) setActiveScenario(data.report_context.scenario);
       // Advance the workflow indicator based on how far we've got
-      if (data.report_context) setWorkflowStep(3);       // steps 1-3 done, outputs next
-      else if (data.rank_context) setWorkflowStep(2);    // steps 1-2 done, build report next
-      else setWorkflowStep(1);                           // step 1 done, scenario next
+      if (data.report_context) {
+        setWorkflowStep(3);   // steps ①②③ done, outputs next
+        aiReportButton.classList.add("build-done");
+        aiReportButton.classList.remove("build-failed");
+      } else if (data.rank_context) setWorkflowStep(2); // ①② done, build report next
+      else setWorkflowStep(1);                           // ① done, scenario next
     }
 
     function clearPage() {
@@ -557,7 +571,13 @@
     }
     async function runBuildReport(buttonElement = aiReportButton, buttonText = "Build report") {
       if (!lastRankContext) { error.hidden = false; error.textContent = "Rank a scenario first, then build the report."; return; }
-      return runAiReport({ buttonElement, buttonText, endpoint: "/api/ai-scenario-report", progressStart: "Building report from ranked shortlist...", scenario: lastRankContext.scenario, rankedUrls: lastRankContext.ranked_urls });
+      const result = await runAiReport({ buttonElement, buttonText, endpoint: "/api/ai-scenario-report", progressStart: "Building report from ranked shortlist...", scenario: lastRankContext.scenario, rankedUrls: lastRankContext.ranked_urls });
+      if (!result) {
+        // Build Report failed — make retry obvious
+        aiReportButton.classList.add("build-failed");
+        aiReportButton.classList.remove("build-done");
+      }
+      return result;
     }
 
     function approxMoney(value, purposeValue) {
@@ -855,7 +875,8 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Agent plan failed");
         renderAgentPlan(data.agent_plan || {});
-        setWorkflowStep(3);
+        wf4a?.classList.remove("active");
+        wf4a?.classList.add("done");
       } catch (err) {
         error.hidden = false;
         error.textContent = err.name === "AbortError" ? "Agent plan timed out. Try fewer ranked results." : err.message;
@@ -1107,7 +1128,8 @@
         renderAiClientReport(data.client_report || {});
         aiPanel.hidden = false;
         aiPanel.textContent = "Client report opened in a new tab.";
-        setWorkflowStep(4);
+        wf4b?.classList.remove("active");
+        wf4b?.classList.add("done");
       } catch (err) {
         error.hidden = false;
         error.textContent = err.name === "AbortError" ? "Client report timed out. Try fewer ranked results." : err.message;
