@@ -2,6 +2,7 @@ import argparse
 import json
 import time
 import traceback
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -17,6 +18,10 @@ from workflow_paths import ensure_purpose_dirs, prompt_for_purpose, urls_file
 START_URLS = {
     "sale": "https://www.propertyfinder.ae/en/buy/properties-for-sale.html",
     "rent": "https://www.propertyfinder.ae/en/rent/properties-for-rent.html",
+}
+SORT_PARAMS = {
+    "default": {},
+    "newest": {"ob": "nd"},
 }
 
 
@@ -51,6 +56,27 @@ def save_urls(urls, output_file):
     print(f"URLs saved to: {output_file}")
 
 
+def with_query_params(url, params):
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query.update(params)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def apply_sort_to_current_url(driver, sort):
+    params = SORT_PARAMS.get(sort or "default", {})
+
+    if not params:
+        return
+
+    sorted_url = with_query_params(driver.current_url, params)
+
+    if sorted_url != driver.current_url:
+        print(f"Applying sort '{sort}': {sorted_url}")
+        driver.get(sorted_url)
+        time.sleep(5)
+
+
 def wait_for_manual_find(seconds, beep=True):
     attention_beep(beep)
     print(f"Click Find / complete any bot check in Chrome. Waiting {seconds} seconds before scanning results...")
@@ -60,7 +86,7 @@ def wait_for_manual_find(seconds, beep=True):
         time.sleep(min(10, remaining))
 
 
-def collect_property_urls(search_location, purpose, output_file, manual_wait, beep=True):
+def collect_property_urls(search_location, purpose, output_file, manual_wait, beep=True, sort="default", max_pages=None):
     driver = create_driver()
     all_urls = []
 
@@ -145,6 +171,8 @@ def collect_property_urls(search_location, purpose, output_file, manual_wait, be
 
         print("Current URL:", driver.current_url)
         print("Page title:", driver.title)
+        apply_sort_to_current_url(driver, sort)
+        print("Collection URL:", driver.current_url)
 
         #iterate through pages and collect property URLs
 
@@ -194,6 +222,10 @@ def collect_property_urls(search_location, purpose, output_file, manual_wait, be
 
             save_urls(all_urls, output_file)
 
+            if max_pages and page >= max_pages:
+                print(f"Reached max pages ({max_pages}). Finished.")
+                break
+
             # collected urls, now try to go to next page
             try:
                 next_link = driver.find_element(
@@ -235,6 +267,8 @@ if __name__ == "__main__":
     parser.add_argument("--purpose", choices=["sale", "rent"], help="Listing purpose. If omitted, you will be prompted.")
     parser.add_argument("--location", help="Location to search for, for example 'Arabian Ranches 2'.")
     parser.add_argument("--output", help="Output JSON file. Defaults to output/<purpose>/property_urls.json.")
+    parser.add_argument("--sort", choices=sorted(SORT_PARAMS), default="default", help="Sort result pages before collecting URLs.")
+    parser.add_argument("--max-pages", type=int, help="Maximum number of result pages to collect.")
     parser.add_argument(
         "--manual-wait",
         type=int,
@@ -249,7 +283,7 @@ if __name__ == "__main__":
     ensure_purpose_dirs(purpose)
     output_file = urls_file(purpose) if not args.output else args.output
 
-    urls = collect_property_urls(search_location, purpose, output_file, args.manual_wait, not args.no_beep)
+    urls = collect_property_urls(search_location, purpose, output_file, args.manual_wait, not args.no_beep, args.sort, args.max_pages)
 
 
     print(f"\nFinal URL count: {len(urls)}")

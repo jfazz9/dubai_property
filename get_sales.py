@@ -9,6 +9,7 @@ VALID_PURPOSES = ("sale", "rent")
 
 def command_for_step(step, purpose, args):
     python = sys.executable
+    scrape_mode = "new-only" if args.quick_new else args.scrape_mode
 
     if step == "collect":
         command = [
@@ -21,6 +22,9 @@ def command_for_step(step, purpose, args):
             "--manual-wait",
             str(args.collect_wait),
         ]
+
+        if args.quick_new:
+            command.extend(["--sort", "newest", "--max-pages", str(args.quick_new_pages)])
 
         if args.no_beep:
             command.append("--no-beep")
@@ -40,7 +44,7 @@ def command_for_step(step, purpose, args):
             "--delay-max",
             str(args.delay_max),
             "--scrape-mode",
-            args.scrape_mode,
+            scrape_mode,
         ]
 
         if args.fresh_output:
@@ -149,6 +153,8 @@ def parse_args():
     parser.add_argument("--delay-min", type=float, default=5, help="Minimum delay between scraped listing pages.")
     parser.add_argument("--delay-max", type=float, default=10, help="Maximum delay between scraped listing pages.")
     parser.add_argument("--scrape-mode", choices=["new-only", "all"], default="new-only", help="Scrape only new URLs or all URLs.")
+    parser.add_argument("--quick-new", action="store_true", help="Collect only newest result pages before running the normal new-only refresh pipeline.")
+    parser.add_argument("--quick-new-pages", type=int, default=3, help="Number of newest result pages to collect when --quick-new is used.")
     parser.add_argument("--fresh-output", action="store_true", help="Create a fresh raw scrape output file.")
     parser.add_argument("--no-resume", action="store_true", help="Ignore scraper resume files.")
     parser.add_argument("--active-limit", type=int, help="Only active-check the first N rows.")
