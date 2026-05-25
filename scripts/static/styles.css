@@ -356,6 +356,27 @@
     .chip.estimate:hover { background: #f5f0ff; }
     .chip.opportunity { border-color: #c0411a; color: #c0411a; }
     .chip.opportunity:hover { background: #fff4f0; }
+    .auto-build-toggle {
+      min-height: 24px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 9px;
+      border: 1px solid #bddbd2;
+      border-radius: 999px;
+      background: #f6fbf9;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+    .auto-build-toggle input {
+      width: 13px;
+      height: 13px;
+      accent-color: var(--accent);
+      margin: 0;
+    }
     .opp-purpose-select {
       min-height: 26px;
       border: 1px solid #e3aa95;

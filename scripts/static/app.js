@@ -27,6 +27,7 @@
     const aiReportButton = document.querySelector("#ai-report");
     const agentPlanButton = document.querySelector("#agent-plan");
     const clientReportButton = document.querySelector("#client-report");
+    const autoBuildReport = document.querySelector("#auto-build-report");
     const scenarioButtons = document.querySelectorAll(".scenario-button");
     const checkButton = document.querySelector("#check-openai");
     const keyBar      = document.querySelector("#key-bar");
@@ -545,11 +546,18 @@
     async function runScenario(scenario, buttonElement) {
       const labels = { best_value: "Best value", budget_reality: "Budget reality", fallback: "Fallback", negotiation: "Negotiation", listing_opportunity: "Listing opp.", upgrade_potential: "Upgrade", move_in_ready: "Move-in ready" };
       const starts = { best_value: "Building value shortlist...", budget_reality: "Building budget reality case...", fallback: "Building premium fallback shortlist...", negotiation: "Building negotiation case...", listing_opportunity: "Finding listing opportunities...", upgrade_potential: "Finding upgrade potential...", move_in_ready: "Finding move-in ready options..." };
-      return runAiReport({ buttonElement, buttonText: labels[scenario] || "Scenario", endpoint: "/api/ai-scenario-rank", progressStart: starts[scenario] || "Building scenario report...", scenario });
+      const buttonText = labels[scenario] || "Scenario";
+      const rankedData = await runAiReport({ buttonElement, buttonText, endpoint: "/api/ai-scenario-rank", progressStart: starts[scenario] || "Building scenario report...", scenario });
+
+      if (rankedData && autoBuildReport?.checked && lastRankContext?.ranked_urls?.length) {
+        return runBuildReport(buttonElement, buttonText);
+      }
+
+      return rankedData;
     }
-    async function runBuildReport() {
+    async function runBuildReport(buttonElement = aiReportButton, buttonText = "Build report") {
       if (!lastRankContext) { error.hidden = false; error.textContent = "Rank a scenario first, then build the report."; return; }
-      return runAiReport({ buttonElement: aiReportButton, buttonText: "Build report", endpoint: "/api/ai-scenario-report", progressStart: "Building report from ranked shortlist...", scenario: lastRankContext.scenario, rankedUrls: lastRankContext.ranked_urls });
+      return runAiReport({ buttonElement, buttonText, endpoint: "/api/ai-scenario-report", progressStart: "Building report from ranked shortlist...", scenario: lastRankContext.scenario, rankedUrls: lastRankContext.ranked_urls });
     }
 
     function approxMoney(value, purposeValue) {
@@ -1139,10 +1147,12 @@
         aiPanel.innerHTML = `
           <section class="report-section"><h2>Market Read</h2><pre>${escapeHtml(data.ai.market_read || "No market read returned.")}</pre></section>
           <section class="report-section"><h2>Conclusion</h2><pre>${escapeHtml(data.ai.client_response || "No conclusion returned.")}</pre></section>`;
+        return data;
       } catch (err) {
         error.hidden = false;
         error.textContent = err.name === "AbortError" ? "AI feedback timed out after 5 minutes. Try a narrower prompt." : err.message;
         aiPanel.hidden = true;
+        return null;
       } finally {
         clearInterval(progressId);
         clearTimeout(timeoutId);

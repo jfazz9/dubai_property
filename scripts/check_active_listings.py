@@ -311,6 +311,17 @@ def run_active_checks(master_df, checker=check_url, limit=None, delay=0.0, check
     return master_df, pd.DataFrame(results)
 
 
+def should_confirm_with_browser(result):
+    """Return True when the lightweight request is too risky to trust alone."""
+    if result.status.startswith("unknown_"):
+        return True
+
+    # Property Finder pages are heavily client-rendered. The lightweight HTML can
+    # contain a stale/placeholder "no longer available" block even when the
+    # rendered browser page later hydrates into a live listing.
+    return result.status == "inactive_not_found_text"
+
+
 def run_active_checks_with_browser_fallback(master_df, limit=None, delay=0.0, checked_at=None, timeout=15, human_verification_wait=0, render_wait=12, debug_dir=None):
     try:
         from extract_listing_details import create_driver
@@ -323,7 +334,7 @@ def run_active_checks_with_browser_fallback(master_df, limit=None, delay=0.0, ch
         def checker(url):
             result = check_url(url, timeout=timeout)
 
-            if result.status.startswith("unknown_"):
+            if should_confirm_with_browser(result):
                 return browser_check_url(
                     driver,
                     url,

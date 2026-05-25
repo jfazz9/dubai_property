@@ -4,6 +4,7 @@ from scripts.check_active_listings import (
     ActiveCheckResult,
     classify_response,
     run_active_checks,
+    should_confirm_with_browser,
     wait_for_rendered_state,
 )
 
@@ -83,6 +84,12 @@ def test_classify_response_marks_property_finder_gone_card_inactive():
 
     assert result.is_active is False
     assert result.status == "inactive_not_found_text"
+
+
+def test_inactive_text_result_needs_browser_confirmation():
+    result = ActiveCheckResult(False, "inactive_not_found_text", "rendered page says listing is unavailable")
+
+    assert should_confirm_with_browser(result) is True
 
 
 def test_wait_for_rendered_state_detects_gone_card():

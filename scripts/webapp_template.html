@@ -145,6 +145,10 @@
         <button class="chip scenario-button" type="button" data-scenario="listing_opportunity">Listing opp.</button>
         <button class="chip scenario-button" type="button" data-scenario="upgrade_potential">Upgrade</button>
         <button class="chip scenario-button" type="button" data-scenario="move_in_ready">Move-in ready</button>
+        <label class="auto-build-toggle" title="Run Build report automatically after a scenario ranks the shortlist">
+          <input id="auto-build-report" type="checkbox" checked>
+          <span>Auto-build</span>
+        </label>
         <div class="report-actions">
           <button class="report-chip" id="ai-report" type="button">Build report</button>
           <button class="report-chip agent-plan-chip" id="agent-plan" type="button">Agent plan</button>
@@ -165,7 +169,7 @@
             <li>Choose Listings scope when the client will only consider certain communities.</li>
             <li>Choose Comps scope for the market evidence you want in the AI report.</li>
             <li>Press Find, scan the shortlist, then refine the prompt if the business angle needs more context.</li>
-            <li>Press the matching scenario button to rank the shortlist, then Build report for the final write-up.</li>
+            <li>Press the matching scenario button. With Auto-build on, it ranks the shortlist and then builds the report automatically.</li>
           </ol>
         </article>
         <article class="help-card wide">
@@ -187,8 +191,8 @@
           <h3>Two-Step AI</h3>
           <ol>
             <li>General: broad AI feedback when you do not want a specific scenario.</li>
-            <li>Scenario button: ranks the cards in batches and keeps timeout risk lower.</li>
-            <li>Build report: uses the ranked cards and selected comps to produce the deeper market-backed report.</li>
+            <li>Scenario button: ranks the cards in batches, then auto-builds the report when Auto-build is on.</li>
+            <li>Build report: manual retry button that uses the ranked cards and selected comps to produce the deeper market-backed report.</li>
           </ol>
         </article>
         <article class="help-card wide">
