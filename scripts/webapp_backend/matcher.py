@@ -62,15 +62,17 @@ def match_prompt(
         listing_communities,
     )
     matches_df, master_df, path = build_matches_dataframe(enquiry, limit)
+    premium_compromise_df = build_premium_compromise_dataframe(enquiry, master_df, matches_df, limit=OVER_BUDGET_LIMIT)
     reality_df = build_budget_reality_primary_dataframe(enquiry, master_df, limit=limit)
 
     if not reality_df.empty:
         matches_df = reality_df
+        premium_compromise_df = pd.DataFrame()
 
     over_budget_df = build_over_budget_dataframe(enquiry, master_df, matches_df, limit=OVER_BUDGET_LIMIT)
     fallback_df = build_budget_fallback_dataframe(enquiry, master_df, limit=OVER_BUDGET_LIMIT)
 
-    return result_payload(enquiry, matches_df, master_df, path, over_budget_df=over_budget_df, fallback_df=fallback_df)
+    return result_payload(enquiry, matches_df, master_df, path, premium_compromise_df=premium_compromise_df, over_budget_df=over_budget_df, fallback_df=fallback_df)
 
 
 def normalize_quick_text(value):
@@ -251,6 +253,10 @@ def build_matches_dataframe(enquiry, limit=DEFAULT_RESULT_LIMIT):
         frames.append(match_enquiry(search_df, current_enquiry, limit=limit))
 
     matches_df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    exact_df = exact_bedroom_matches_dataframe(enquiry, search_df, limit=limit)
+
+    if not exact_df.empty:
+        matches_df = exact_df
 
     if not matches_df.empty:
         matches_df = matches_df.sort_values(
@@ -259,6 +265,85 @@ def build_matches_dataframe(enquiry, limit=DEFAULT_RESULT_LIMIT):
         ).drop_duplicates(subset=["url"]).head(limit)
 
     return matches_df, master_df, path
+
+
+def requested_bedroom_values(enquiry):
+    values = enquiry.get("bedrooms_options") or []
+
+    if not values and enquiry.get("bedrooms") is not None:
+        values = [enquiry.get("bedrooms")]
+
+    return {
+        int(value)
+        for value in values
+        if value is not None
+    }
+
+
+def exact_bedroom_matches_dataframe(enquiry, search_df, limit=DEFAULT_RESULT_LIMIT):
+    requested_beds = requested_bedroom_values(enquiry)
+
+    if not requested_beds:
+        return pd.DataFrame()
+
+    frames = []
+
+    for bedroom in sorted(requested_beds):
+        current_enquiry = dict(enquiry)
+        current_enquiry["bedrooms"] = bedroom
+        current_enquiry["budget_floor"] = None
+        frame = match_enquiry(search_df, current_enquiry, limit=max(limit, DEFAULT_RESULT_LIMIT))
+
+        if frame.empty or "bedrooms" not in frame.columns:
+            continue
+
+        exact_frame = frame[pd.to_numeric(frame["bedrooms"], errors="coerce").isin(requested_beds)].copy()
+
+        if not exact_frame.empty:
+            frames.append(exact_frame)
+
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+
+def build_premium_compromise_dataframe(enquiry, master_df, matches_df, limit=OVER_BUDGET_LIMIT):
+    requested_beds = requested_bedroom_values(enquiry)
+
+    if not requested_beds:
+        return pd.DataFrame()
+
+    search_df = filter_master_by_listing_scope(master_df, enquiry)
+    frames = []
+
+    for bedroom in sorted(requested_beds):
+        current_enquiry = dict(enquiry)
+        current_enquiry["bedrooms"] = bedroom
+        frame = match_enquiry(search_df, current_enquiry, limit=max(DEFAULT_RESULT_LIMIT, limit))
+
+        if frame.empty or "bedrooms" not in frame.columns:
+            continue
+
+        compromise_frame = frame[~pd.to_numeric(frame["bedrooms"], errors="coerce").isin(requested_beds)].copy()
+
+        if not compromise_frame.empty:
+            frames.append(compromise_frame)
+
+    compromise_df = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+    if compromise_df.empty:
+        return compromise_df
+
+    if not matches_df.empty and "url" in matches_df.columns:
+        compromise_df = compromise_df[~compromise_df["url"].isin(matches_df["url"])]
+
+    if compromise_df.empty:
+        return compromise_df
+
+    return (
+        compromise_df
+        .sort_values(["match_score", "budget_distance"], ascending=[False, True])
+        .drop_duplicates(subset=["url"])
+        .head(limit)
+    )
 
 
 def over_budget_ceiling(enquiry):

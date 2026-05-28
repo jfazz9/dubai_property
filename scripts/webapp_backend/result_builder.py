@@ -149,6 +149,7 @@ def result_payload(
     master_df,
     path,
     ai_result=None,
+    premium_compromise_df=None,
     over_budget_df=None,
     fallback_df=None,
 ):
@@ -163,6 +164,7 @@ def result_payload(
         "enquiry": enquiry,
         "client_response": client_response,
         "matches": add_similar_listing_warnings(rows_payload(matches_df, price_column)),
+        "premium_compromise_matches": add_similar_listing_warnings(rows_payload(premium_compromise_df, price_column)) if premium_compromise_df is not None else [],
         "over_budget_matches": add_similar_listing_warnings(rows_payload(over_budget_df, price_column)) if over_budget_df is not None else [],
         "fallback_matches": add_similar_listing_warnings(rows_payload(fallback_df, price_column)) if fallback_df is not None else [],
     }

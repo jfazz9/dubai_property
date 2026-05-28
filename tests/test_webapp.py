@@ -708,6 +708,47 @@ def test_budget_reality_mode_uses_above_budget_villas_as_primary_and_townhouses_
     ]
 
 
+def test_match_prompt_keeps_exact_bedroom_matches_primary_and_separates_premium_compromises(monkeypatch):
+    master_df = pd.DataFrame([
+        {
+            "listing_purpose": "rent",
+            "is_active": True,
+            "url": "https://example.com/exact-five-bed",
+            "title": "Rent in Lila: 5BR family villa",
+            "annual_rent": 350000,
+            "bedrooms": 5,
+            "bathrooms": 5,
+            "predicted_community": "Lila",
+            "property_size_sqft": 4650,
+            "description": "Vacant 5 bedroom villa in Arabian Ranches 2 with garden.",
+        },
+        {
+            "listing_purpose": "rent",
+            "is_active": True,
+            "url": "https://example.com/premium-four-bed",
+            "title": "Rent in Rosa: Vacant | Close to Pool | Private Garden",
+            "annual_rent": 440000,
+            "bedrooms": 4,
+            "bathrooms": 5,
+            "predicted_community": "Rosa",
+            "property_size_sqft": 7775,
+            "description": "Vacant ready to move modern open-plan villa with private garden near pool.",
+        },
+    ])
+
+    monkeypatch.setattr("webapp_backend.read_master", lambda purpose: (master_df, "memory.csv"))
+
+    result = match_prompt(
+        "5 bed villa ready to move budget 460k",
+        selected_purpose="rent",
+        selected_intent="auto",
+        limit=10,
+    )
+
+    assert [item["url"] for item in result["matches"]] == ["https://example.com/exact-five-bed"]
+    assert [item["url"] for item in result["premium_compromise_matches"]] == ["https://example.com/premium-four-bed"]
+
+
 def test_add_similar_listing_warnings_keeps_items_separate():
     items = [
         {

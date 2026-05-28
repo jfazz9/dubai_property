@@ -53,6 +53,8 @@
     const error       = document.querySelector("#error");
     const spinner     = document.querySelector("#spinner");
     const results     = document.querySelector("#results");
+    const premiumCompromiseSection = document.querySelector("#premium-compromise-section");
+    const premiumCompromiseResults = document.querySelector("#premium-compromise-results");
     const aboveBudgetSection = document.querySelector("#above-budget-section");
     const aboveBudgetResults = document.querySelector("#above-budget-results");
     const fallbackSection    = document.querySelector("#fallback-section");
@@ -324,6 +326,9 @@
       ].join("");
       response.querySelector("div").textContent = data.client_response;
       results.innerHTML = renderListings(data.matches || [], data.enquiry.purpose);
+      const premiumCompromises = data.premium_compromise_matches || [];
+      premiumCompromiseSection.hidden = premiumCompromises.length === 0;
+      premiumCompromiseResults.innerHTML = renderListings(premiumCompromises, data.enquiry.purpose);
       const watchlist = data.over_budget_matches || [];
       aboveBudgetSection.hidden = watchlist.length === 0;
       aboveBudgetResults.innerHTML = renderListings(watchlist, data.enquiry.purpose);
@@ -367,6 +372,8 @@
       error.hidden = true;
       error.textContent = "";
       results.innerHTML = "";
+      premiumCompromiseSection.hidden = true;
+      premiumCompromiseResults.innerHTML = "";
       aboveBudgetSection.hidden = true;
       aboveBudgetResults.innerHTML = "";
       fallbackSection.hidden = true;
@@ -392,6 +399,8 @@
       bestShortlistTitle.hidden = true;
       error.hidden = true;
       results.innerHTML = "";
+      premiumCompromiseSection.hidden = true;
+      premiumCompromiseResults.innerHTML = "";
       aboveBudgetSection.hidden = true;
       aboveBudgetResults.innerHTML = "";
       fallbackSection.hidden = true;
@@ -430,8 +439,10 @@
       quickButton.textContent = "Filtering…";
       error.hidden = true;
       aiPanel.hidden = true;
+      premiumCompromiseSection.hidden = true;
       aboveBudgetSection.hidden = true;
       fallbackSection.hidden = true;
+      premiumCompromiseResults.innerHTML = "";
       aboveBudgetResults.innerHTML = "";
       fallbackResults.innerHTML = "";
       spinner.style.display = "block";
@@ -1430,6 +1441,7 @@
     ownerButton.addEventListener("click", lookupOwner);
     ownerUrlBox.addEventListener("keydown", (e) => { if (e.key === "Enter") lookupOwner(); });
     results.addEventListener("click", handleListingActionClick);
+    premiumCompromiseResults.addEventListener("click", handleListingActionClick);
     aboveBudgetResults.addEventListener("click", handleListingActionClick);
     fallbackResults.addEventListener("click", handleListingActionClick);
     aiPanel.addEventListener("click", handleListingActionClick);
