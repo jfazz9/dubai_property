@@ -1,8 +1,9 @@
 from unittest.mock import patch
 
 import pandas as pd
+import pytest
 
-from scripts.listing_master import build_price_history_events, prepare_master_update
+from scripts.listing_master import build_price_history_events, prepare_master_update, validate_master_update_input
 
 
 def master_tracking_df():
@@ -65,6 +66,7 @@ def predicted_tracking_df():
             "price": 575000,
             "annual_rent": 575000,
             "predicted_community": "Rosa",
+            "predicted_type": "Type 5",
             "scraped_at": "2026-05-13 09:00:00",
         },
         {
@@ -74,9 +76,51 @@ def predicted_tracking_df():
             "price": 625000,
             "annual_rent": 625000,
             "predicted_community": "Rosa",
+            "predicted_type": "Type 5",
             "scraped_at": "2026-05-13 09:00:00",
         },
     ])
+
+
+def test_validate_master_update_input_accepts_valid_rows():
+    validate_master_update_input(predicted_tracking_df(), "rent")
+
+
+def test_validate_master_update_input_rejects_missing_required_columns():
+    predicted_df = predicted_tracking_df().drop(columns=["url"])
+
+    with pytest.raises(ValueError, match="Missing required columns"):
+        validate_master_update_input(predicted_df, "rent")
+
+
+def test_validate_master_update_input_rejects_blank_urls():
+    predicted_df = predicted_tracking_df()
+    predicted_df.loc[0, "url"] = " "
+
+    with pytest.raises(ValueError, match="missing URL values"):
+        validate_master_update_input(predicted_df, "rent")
+
+
+def test_validate_master_update_input_rejects_duplicate_urls():
+    predicted_df = predicted_tracking_df()
+    predicted_df.loc[1, "url"] = predicted_df.loc[0, "url"]
+
+    with pytest.raises(ValueError, match="duplicate incoming URL"):
+        validate_master_update_input(predicted_df, "rent")
+
+def test_validate_master_update_input_rejects_blank_community_invalid():
+    predicted_df = predicted_tracking_df()
+    predicted_df.loc[0, "predicted_community"] = ""
+ 
+    with pytest.raises(ValueError, match= "predicted_community cannot be blank"):
+        validate_master_update_input(predicted_df, "rent")
+
+def test_validate_master_update_input_rejects_wrong_purpose():
+    predicted_df = predicted_tracking_df()
+    predicted_df.loc[0, "listing_purpose"] = "sale"
+
+    with pytest.raises(ValueError, match="Cannot update rent master"):
+        validate_master_update_input(predicted_df, "rent")
 
 
 def test_prepare_master_update_full_refresh_tracks_seen_and_inactive_rows_by_scope():

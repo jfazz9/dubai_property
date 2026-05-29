@@ -27,6 +27,12 @@ PRICE_HISTORY_COLUMNS = [
     "annual_rent_change_pct",
     "title",
 ]
+MASTER_UPDATE_REQUIRED_COLUMNS = [
+    "url",
+    "listing_purpose",
+    "predicted_community",
+    "predicted_type",
+]
 
 
 def clean_number(value):
@@ -50,6 +56,40 @@ def seen_date_from_row(row):
             return parsed.strftime("%Y-%m-%d")
 
     return pd.Timestamp.now().strftime("%Y-%m-%d")
+
+
+def validate_master_update_input(predicted_df, purpose):
+    missing_columns = [
+        column
+        for column in MASTER_UPDATE_REQUIRED_COLUMNS
+        if column not in predicted_df.columns
+    ]
+
+    if missing_columns:
+        raise ValueError(f"Missing required columns before master update: {missing_columns}")
+
+    url_text = predicted_df["url"].fillna("").astype(str).str.strip()
+
+    if url_text.eq("").any():
+        raise ValueError("Cannot update master: some rows have missing URL values")
+
+    duplicate_urls = sorted(url_text[url_text.duplicated()].unique())
+
+    if duplicate_urls:
+        examples = ", ".join(duplicate_urls[:3])
+        raise ValueError(f"Cannot update master: duplicate incoming URL values: {examples}")
+
+    community_text = predicted_df["predicted_community"].fillna("").astype(str).str.strip()
+
+    if community_text.eq("").any():
+        raise ValueError("predicted_community cannot be blank")
+    
+    purpose_text = predicted_df["listing_purpose"].fillna("").astype(str).str.strip().str.lower()
+    bad_purpose_mask = purpose_text != purpose
+
+    if bad_purpose_mask.any():
+        bad_values = sorted(purpose_text[bad_purpose_mask].unique())
+        raise ValueError(f"Cannot update {purpose} master with listing_purpose values: {bad_values}")
 
 
 def prepare_master_update(master_df, predicted_df, refresh_seen=True):
@@ -225,6 +265,8 @@ def save_csv_with_fallback(df, output_file):
 def update_master(predicted_df, purpose, refresh_seen=True):
     if predicted_df.empty:
         return None, None, 0
+
+    validate_master_update_input(predicted_df, purpose)
 
     current_master_file = master_file(purpose)
 
