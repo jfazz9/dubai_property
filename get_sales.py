@@ -69,12 +69,17 @@ def command_for_step(step, purpose, args):
         ]
 
     if step == "predict":
-        return [
+        command = [
             python,
             "scripts/predict_villa_type.py",
             "--purpose",
             purpose,
         ]
+
+        if args.quick_new:
+            command.append("--partial-refresh")
+
+        return command
 
     if step == "active":
         command = [
